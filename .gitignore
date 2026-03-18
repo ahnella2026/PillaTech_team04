@@ -224,3 +224,6 @@ secrets/
 secrets.*
 *.secret
 credentials/
+
+# Data and Models
+data/ 
