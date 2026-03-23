@@ -14,7 +14,7 @@ BASE_DIR = 'data/sprint_ai_project1_data'
 
 ANNOTATION_DIR = os.path.join(BASE_DIR, 'train_annotations') 
 IMG_DIR = os.path.join(BASE_DIR, 'train_images')             
-NEW_DATA_DIR = './pill_dataset_baseline_aug'
+NEW_DATA_DIR = './pill_dataset_baseline'
 
 if not os.path.exists(ANNOTATION_DIR):
     raise FileNotFoundError(f"🚨 라벨 폴더를 찾을 수 없습니다: {ANNOTATION_DIR}")
@@ -53,7 +53,7 @@ def phase1_parse_json():
         'nc': len(yolo_names),
         'names': yolo_names
     }
-    with open(os.path.join(NEW_DATA_DIR, 'data_basemodel_aug.yaml'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(NEW_DATA_DIR, 'data_basemodel.yaml'), 'w', encoding='utf-8') as f:
         yaml.dump(yaml_data, f, allow_unicode=True)
     
     for json_path in tqdm(json_files, desc="YOLO 라벨 생성 중"):
@@ -155,7 +155,7 @@ def phase4_train_model():
     print("\n[Phase 4] 베이스라인 모델 학습 시작 (YOLOv8n / imgsz=640 / 무증강)")
     
     model = YOLO('yolov8n.pt') 
-    yaml_path = os.path.join(NEW_DATA_DIR, 'data_basemodel_aug.yaml')
+    yaml_path = os.path.join(NEW_DATA_DIR, 'data_basemodel.yaml')
     
     results = model.train(
         data=yaml_path,
