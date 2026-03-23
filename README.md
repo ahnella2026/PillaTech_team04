@@ -15,7 +15,7 @@
 conda create -n codeit python=3.12 -y
 conda activate codeit
 ```
-# 라이브러리 설치
+### 라이브러리 설치
 ```bash
 pip install -r requirements.txt
 ```
@@ -69,6 +69,11 @@ python test.py
 1. **데이터 정상화 완료:** 예원님 수동 라벨링 전량 반영 (Invalid 0건, 누락 복구 완료).
 2. **Clean Baseline 달성:** 3-Seed 평균 **mAP@50: 0.884** 돌파 (YOLOv8n 기준).
 
-## 8. 향후 일정 (Next Steps)
+## 8. 향후 일정 
 1. **성능 고도화:** Nano 모델을 넘어 모델 사이즈 확장(Small, Medium) 및 Ensemble 기법 검토.
 2. **증강 전략 최적화:** 알약 특성에 특화된 Rotation 및 Blur 증강 실험 진행 예정.
+3. **예원님 baseline 결과로 고도화**: 예원님 결과(seed1개 실험)와 나의 모델 결과(seed3개 실험) 성능 차이가 별로 없어서 seed만 달라지는 걸로 반복 실험할 필요가 없을 것 같다는 강사님의 조언을 받음 -> 일단 코드가 간단한 예원님 결과를 baseline모델로 설정하기로 결정  
+
+## 9. 비고 
+원래 model/sujin 브런치를 만들고 베이스라인 실험 결과를 올렸어야했으나 
+착각해서 pred/sujin 브런치에 모델학습 결과를 올렸음. 
