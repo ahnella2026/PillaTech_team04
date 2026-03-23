@@ -36,6 +36,8 @@
 ---
 
 ## 📁 3. Artifacts Location
-- 최적의 가중치 파일은 학습 완료 시 자동으로 최상단 `weights/` 경로로 추출됩니다.
-- **Top Weights:** `/weights/baseline_best_seed_{seed}.pt`
+- 각 Seed 학습 결과는 기본적으로 `/runs/baseline/seed_{seed}/` 경로에 저장됩니다.
+- 시드별 최고 성능 가중치 `best.pt`는 학습 완료 후 최상단 `weights/` 폴더로 한 번 더 복사됩니다.
+- **Per-Seed Weights:** `/runs/baseline/seed_{seed}/weights/best.pt`
+- **Exported Top Weights:** `/weights/baseline_best_seed_{seed}.pt`
 - **Results Graphs & Logs:** `/runs/baseline/seed_{seed}/`
