@@ -224,3 +224,10 @@ secrets/
 secrets.*
 *.secret
 credentials/
+
+# Data and Models
+# 전용 데이터셋 및 학습 로그 제외
+data/raw/sprint_ai_project1_data/train_images/
+data/yolo_cleaned/
+runs/
+weights/ #학습 가중치 
