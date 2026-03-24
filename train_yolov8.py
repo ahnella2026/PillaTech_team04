@@ -51,24 +51,24 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--data",
         type=Path,
-        default=None,
+        default=None, # Keep auto-detection logic
         help="Path to Ultralytics dataset.yaml (default: auto-detect).",
     )
     parser.add_argument(
         "--model",
         type=str,
-        default="yolov8n.pt",
-        help="Model weights or model name (e.g. yolov8n.pt, yolov8s.pt, path/to.pt).",
+        default="yolo11s.pt", # Changed default model
+        help="Model path (e.g., yolo11s.pt, yolov8n.pt)", # Updated help message
     )
-    parser.add_argument("--epochs", type=int, default=50)
-    parser.add_argument("--imgsz", type=int, default=640)
-    parser.add_argument("--batch", type=int, default=16)
-    parser.add_argument("--name", type=str, default="pill_exp1_stratified_full")
+    parser.add_argument("--epochs", type=int, default=50, help='number of epochs') # Added help message
+    parser.add_argument("--imgsz", type=int, default=640, help='image size') # Added help message
+    parser.add_argument("--batch", type=int, default=32, help='batch size') # Changed default batch size and added help message
+    parser.add_argument("--name", type=str, default="pill_exp2_yolo11s", help='experiment name') # Changed default name and added help message
     parser.add_argument(
         "--device",
         type=str,
-        default=None,
-        help="Override device (e.g. cpu, 0, mps). Default: auto.",
+        default='0', # Changed default device
+        help="cuda device, i.e. 0 or 0,1,2,3 or cpu", # Updated help message
     )
     return parser.parse_args()
 
@@ -123,7 +123,7 @@ def main() -> None:
     # [Final Validation for detailed metrics]
     # This evaluates the 'best.pt' model found in the results directory.
     val_results = model.val(
-        data=args.data,
+        data=str(data_yaml),
         split='val',
         imgsz=args.imgsz,
         batch=args.batch,
