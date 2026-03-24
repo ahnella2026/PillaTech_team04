@@ -24,8 +24,8 @@
 | **Exp 3** | **High-Res Pivot** | Stratified Split / Default Augs | **v11s** | 960 | 50 | **0.995** | **0.990** | **0.995** | **50** | 해상도 증가 불구, 누수 한계(Ceiling) 도달 확인 |
 | **Exp 4** | **No-Flip Fix** | Stratified / **Flip Off** | **v11s** | 960 | 50 | **0.995** | **0.992** | **0.995** | **50** | 각인 보호 효과로 정밀도(50-95) 미세 상승 |
 | **Exp 5** | **Copy-Paste** | Stratified + Custom Copy-Paste | **v11s** | 960 | 50 | **0.995** | **0.993** | **0.995** | **50** | **Kaggle: 0.96804 ** |
-| **Exp 6** | **Rotation Aug** | Stratified / Flip Off + Degree 180 | **v11s** | 960 | 50 | - | - | - | - | **진행 예정 (공간 변이 대응)** |
-| **Exp 7** | **Integrated Opt** | All Optimized (Aug + Res) | **v11s** | 1024| 50 | - | - | - | - | **최종 목표 (>0.90)** |
+| **Exp 6** | **Rotation Aug** | Stratified / Flip Off + Degree 180 + CP | **v11s** | 960 | 50 | 0.990 | 0.940 | 0.995 | 50 | **Kaggle: 0.85483 (성능 급락)** |
+| **Exp 7** | **Final High-Res** | Stratified / Flip Off + CP (No Rotation) | **v11s** | 1024| 50 | - | - | - | - | **최종 목표 (>0.97 고지 탈환)** |
 
 ---
 
@@ -64,7 +64,12 @@
 ### [Exp 5] Copy-Paste (YOLO11s / 960px)
 *   **분석**: 317장의 합성 데이터를 추가하여 데이터셋을 약 3배로 증량한 결과, **Kaggle Public Score 0.96804**라는 성적이 나옴. 
 *   **통찰**: 로컬 mAP(0.99)는 누수 때문에 정체되었으나, 합성 데이터를 통한 '데이터 다양성 확보'가 실전 테스트 데이터(캐글)에서의 일반화 성능을 폭발적으로 향상시켰음을 입증함.
-*   **결정**: 이제는 공간적 변형을 극한으로 주는 **실험 6(Rotation)**을 통해 마지막 한 점까지 쥐어짜는 최적화 단계로 진입
+*   **결정**: 이제는 공간적 변형을 극한으로 주는 **실험 6(Rotation)**을 통해 마지막 한 점까지 쥐어짜는 최적화 단계로 진입함.
+
+### [Exp 6] Rotation Aug (YOLO11s / 960px)
+*   **분석**: 전각도 회전(Degrees=180.0) 적용 결과, **Kaggle Public Score 0.85483**으로 대폭 하락. 
+*   **통찰**: 캐글 테스트 데이터가 이미 정방향 위주로 정렬되어 있을 가능성이 높음. 과도한 회전 변형은 오히려 정방향 데이터에 대한 모델의 정밀도를 떨어뜨리는 독이 됨(Over-fitting to rotation-invariance). 
+*   **결정**: 모델의 실전 근육은 Exp 5(Copy-Paste)임이 확인됨. 실험 7에서는 **회전을 다시 제거하고**, 성공했던 Exp 5 설정에 **1024px 해상도**만 추가하여 마무리에 들어감.
 
 ---
 
