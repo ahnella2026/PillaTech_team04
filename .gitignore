@@ -228,6 +228,7 @@ credentials/
 # Data and Models
 # 전용 데이터셋 및 학습 로그 제외
 data/raw/sprint_ai_project1_data/train_images/
+data/raw/sprint_ai_project1_data/test_images/
 data/processed/
 data/yolo_cleaned/
 data/yolo_dataset/
