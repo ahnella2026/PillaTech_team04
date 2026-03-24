@@ -582,7 +582,7 @@ def main() -> None:
 
     # === 실험 제어 플래그 ===
     USE_STRATIFIED = True     # True: 계층적 분할(Exp1) / False: 랜덤 분할(Baseline)
-    # USE_COPY_PASTE = False    # (실험 2에서 활성화 예정)
+    USE_COPY_PASTE = True     # (실험 5: Copy-Paste 가동)
 
     if not TRAIN_IMG_DIR.exists():
         raise FileNotFoundError(f"Train image directory not found: {TRAIN_IMG_DIR}")
@@ -638,23 +638,23 @@ def main() -> None:
     print(f"    - train images: {len(train_images)}")
     print(f"    - val images  : {len(val_images)}")
 
-    # [7] Copy-Paste 증강 적용 (실험 2에서 주석 해제 예정)
-    # if USE_COPY_PASTE:
-    #     augmented_data = apply_copy_paste_augmentation(
-    #         train_image_names=train_images,
-    #         merged=merged,
-    #         rare_classes=rare_classes,
-    #         target_count=20
-    #     )
-    #     
-    #     # 병합된 데이터에 증강 데이터 추가
-    #     for aug_name, aug_info in augmented_data.items():
-    #         merged[aug_name] = aug_info
-    #         train_images.append(aug_name)
-    #     
-    #     print(f"[7] Added {len(augmented_data)} augmented images to train set")
-    # else:
-    #     print("[7] Copy-Paste augmentation disabled (Experiment 1/Baseline)")
+    # [7] Copy-Paste 증강 적용 (실험 5 가동)
+    if USE_COPY_PASTE:
+        augmented_data = apply_copy_paste_augmentation(
+            train_image_names=train_images,
+            merged=merged,
+            rare_classes=rare_classes,
+            target_count=20
+        )
+        
+        # 병합된 데이터에 증강 데이터 추가
+        for aug_name, aug_info in augmented_data.items():
+            merged[aug_name] = aug_info
+            train_images.append(aug_name)
+        
+        print(f"[7] Added {len(augmented_data)} augmented images to train set")
+    else:
+        print("[7] Copy-Paste augmentation disabled")
 
     train_summary = summarize_split(train_images, merged)
     val_summary = summarize_split(val_images, merged)

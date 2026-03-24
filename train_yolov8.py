@@ -70,6 +70,12 @@ def parse_args() -> argparse.Namespace:
         default='0', # Changed default device
         help="cuda device, i.e. 0 or 0,1,2,3 or cpu", # Updated help message
     )
+    # --- 증강(Augmentation) 제어용 인자 추가 --- #
+    parser.add_argument("--fliplr", type=float, default=0.5, help="horizontal flip probability (default: 0.5)")
+    parser.add_argument("--flipud", type=float, default=0.0, help="vertical flip probability (default: 0.0)")
+    parser.add_argument("--degrees", type=float, default=0.0, help="image rotation degrees (default: 0.0)")
+    parser.add_argument("--mosaic", type=float, default=1.0, help="mosaic augmentation probability (default: 1.0)")
+    
     return parser.parse_args()
 
 
@@ -105,11 +111,18 @@ def main() -> None:
         pretrained=True,
         verbose=True,
 
-        # === 실험 1: Baseline 증강 유지 ===
-        fliplr=0.5,             # YOLOv8 기본값
-        flipud=0.0,
-        degrees=0.0,
-        mosaic=1.0,
+
+        # # === 실험 1: Baseline 증강 유지 ===
+        # fliplr=0.5,             # YOLOv8 기본값
+        # flipud=0.0,
+        # degrees=0.0,
+        # mosaic=1.0,
+
+        # === 증강 설정 (명령어 인자 기반 제어) ===
+        fliplr=args.fliplr,
+        flipud=args.flipud,
+        degrees=args.degrees,
+        mosaic=args.mosaic,
         
         # === 최적화 설정 (기본값 위주) ===
         lr0=0.01,
