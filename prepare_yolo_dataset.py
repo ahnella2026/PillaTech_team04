@@ -11,6 +11,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw" / "sprint_ai_project1_data"
 TRAIN_IMG_DIR = RAW_DATA_DIR / "train_images"
+AUGMENTED_IMG_DIR = PROCESSED_DIR / "augmented_images"
 
 MERGED_ANNOTATIONS_PATH = PROCESSED_DIR / "merged_annotations.json"
 LABEL_MAP_PATH = PROCESSED_DIR / "label_map.json"
@@ -99,6 +100,21 @@ def copy_image(src: Path, dst: Path) -> None:
         raise FileNotFoundError(f"Image not found: {src}")
     shutil.copy2(src, dst)
 
+def find_source_image_path(image_name: str) -> Path:
+    candidates = [
+        TRAIN_IMG_DIR / image_name,
+        AUGMENTED_IMG_DIR / image_name,
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
+    searched = "\n".join(f"- {p}" for p in candidates)
+    raise FileNotFoundError(
+        f"Image not found for '{image_name}'. Looked in:\n{searched}\n\n"
+        "If this is an augmented image, ensure `preprocessing.py` wrote it under "
+        "`data/processed/augmented_images/`."
+    )
+
 
 def save_dataset_yaml(label_map: dict[str, int]) -> None:
     id_to_label = {idx: label for label, idx in label_map.items()}
@@ -119,6 +135,27 @@ def save_dataset_yaml(label_map: dict[str, int]) -> None:
 def main() -> None:
     ensure_dirs()
 
+    missing = [
+        p
+        for p in [
+            MERGED_ANNOTATIONS_PATH,
+            LABEL_MAP_PATH,
+            TRAIN_SPLIT_PATH,
+            VAL_SPLIT_PATH,
+        ]
+        if not p.exists()
+    ]
+    if missing:
+        missing_list = "\n".join(f"- {p}" for p in missing)
+        raise FileNotFoundError(
+            "Missing processed artifacts required to build `data/yolo_dataset/`.\n"
+            f"{missing_list}\n\n"
+            "Next steps:\n"
+            "- If you have raw COCO jsons, run: `python preprocessing.py` first.\n"
+            "- If you already have a ready-to-train YOLO dataset under `data/yolo_cleaned/`,\n"
+            "  you can skip this script and train directly with its `dataset.yaml`.\n"
+        )
+
     merged = read_json(MERGED_ANNOTATIONS_PATH)
     label_map = read_json(LABEL_MAP_PATH)
     train_images = read_json(TRAIN_SPLIT_PATH)
@@ -129,7 +166,8 @@ def main() -> None:
     for image_name in train_images:
         image_info = images_dict[image_name]
 
-        src_img = TRAIN_IMG_DIR / image_name
+        src_img = find_source_image_path(image_name)
+            
         dst_img = YOLO_IMAGES_TRAIN / image_name
         dst_label = YOLO_LABELS_TRAIN / f"{Path(image_name).stem}.txt"
 
@@ -139,7 +177,7 @@ def main() -> None:
     for image_name in val_images:
         image_info = images_dict[image_name]
 
-        src_img = TRAIN_IMG_DIR / image_name
+        src_img = find_source_image_path(image_name)
         dst_img = YOLO_IMAGES_VAL / image_name
         dst_label = YOLO_LABELS_VAL / f"{Path(image_name).stem}.txt"
 
