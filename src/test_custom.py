@@ -17,24 +17,72 @@ DEFAULT_JSON_DIR = PROJECT_ROOT / "data" / "raw" / "sprint_ai_project1_data" / "
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Professional Inference Script for Kaggle Submission (Custom Version)")
-    parser.add_argument("--model", type=str, required=True, help="Path to best.pt model")
+    parser.add_argument("--config", type=str, default=None, help="Path to inference config yaml file")
+    parser.add_argument("--model", type=str, default=None, help="Path to best.pt model")
     parser.add_argument("--imgsz", type=int, default=1024, help="Inference resolution")
     parser.add_argument("--conf", type=float, default=0.25, help="Confidence threshold")
+    parser.add_argument("--iou", type=float, default=0.70, help="NMS IoU threshold (default: 0.70)")
     parser.add_argument("--output", type=str, default="submission.csv", help="Output filename")
     parser.add_argument("--data", type=str, default=str(DEFAULT_YAML_PATH), help="Path to dataset.yaml")
     parser.add_argument("--test_images", type=str, default=str(DEFAULT_TEST_IMG_DIR), help="Path to test images folder")
     parser.add_argument("--json_dir", type=str, default=str(DEFAULT_JSON_DIR), help="Path to raw COCO annotations to build label map")
     return parser.parse_args()
 
-def run_test_and_save_csv():
-    args = parse_args()
+def get_next_exp_id(config_dir):
+    """Automatically find the next experiment ID by scanning the configs/ directory."""
+    if not os.path.exists(config_dir):
+        os.makedirs(config_dir)
+        return 0
     
-    # 인자값에서 설정값 추출
-    MODEL_PATH = args.model
-    TEST_IMG_DIR = args.test_images
-    OUTPUT_CSV = args.output
-    YAML_PATH = args.data
-    JSON_DIR = args.json_dir
+    existing_nums = []
+    for f in os.listdir(config_dir):
+        nums = re.findall(r'exp(\d+)', f)
+        if nums:
+            existing_nums.append(int(nums[0]))
+    
+    return max(existing_nums) + 1 if existing_nums else 0
+
+def save_inference_config(args, next_id):
+    """Save the current inference settings to a yaml file for reproducibility."""
+    config_dir = PROJECT_ROOT / "configs"
+    filename = f"exp{next_id}_inference.yaml"
+    save_path = config_dir / filename
+    
+    config_data = vars(args).copy()
+    # Remove config itself from the saved file to avoid recursion
+    if 'config' in config_data:
+        del config_data['config']
+        
+    with open(save_path, 'w', encoding='utf-8') as f:
+        yaml.dump(config_data, f, default_flow_style=False, allow_unicode=True)
+    
+    print(f"📝 [Auto-Guide] Inference config saved to: {save_path}")
+    return save_path
+
+def run_test_and_save_csv():
+    cli_args = parse_args()
+    
+    # --- Config Loading Logic --- #
+    if cli_args.config:
+        print(f"📂 Loading config from: {cli_args.config}")
+        with open(cli_args.config, 'r', encoding='utf-8') as f:
+            config_data = yaml.safe_load(f)
+        
+        # Override CLI args with config file values (unless explicitly provided in CLI)
+        # For simplicity, we prioritize the config file if --config is passed
+        for key, value in config_data.items():
+            setattr(cli_args, key, value)
+    
+    if cli_args.model is None:
+        print("❌ Error: --model is required (either via CLI or --config file)")
+        return
+
+    # Set derived variables
+    MODEL_PATH = cli_args.model
+    TEST_IMG_DIR = cli_args.test_images
+    OUTPUT_CSV = cli_args.output
+    YAML_PATH = cli_args.data
+    JSON_DIR = cli_args.json_dir
 
     # ---------------------------------------------------------
     # 2. 스마트 역매핑 딕셔너리 만들기 (difflib 유사도 검사)
@@ -109,7 +157,7 @@ def run_test_and_save_csv():
         image_id_str = "".join(re.findall(r'\d+', img_name))
         image_id = int(image_id_str) if image_id_str else 0
             
-        outputs = model.predict(source=img_path, conf=args.conf, imgsz=args.imgsz, verbose=False)
+        outputs = model.predict(source=img_path, conf=cli_args.conf, iou=cli_args.iou, imgsz=cli_args.imgsz, verbose=False)
         
         for r in outputs:
             boxes = r.boxes
@@ -134,6 +182,11 @@ def run_test_and_save_csv():
     df = pd.DataFrame(results_list)
     df.to_csv(OUTPUT_CSV, index=False)
     print(f"\n✅ 분석 완료! 파일 저장됨: {os.path.abspath(OUTPUT_CSV)}")
+    
+    # --- Auto Logging Logic --- #
+    if not cli_args.config: # Only save if we ran with manual CLI args (to create a new guide)
+        next_id = get_next_exp_id(PROJECT_ROOT / "configs")
+        save_inference_config(cli_args, next_id)
 
 if __name__ == '__main__':
     run_test_and_save_csv()
