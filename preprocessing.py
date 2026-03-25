@@ -9,6 +9,8 @@ from typing import Any
 SEED = 42
 VAL_RATIO = 0.2
 RARE_CLASS_THRESHOLD = 5  # 객체 개수가 5개 이하인 클래스를 rare class로 간주
+OVERSAMPLE_RARE_IMAGES = True
+RARE_IMAGE_DUPLICATION_FACTOR = 2  # rare class 포함 이미지를 총 몇 번 포함할지
 
 random.seed(SEED)
 
@@ -323,29 +325,62 @@ def build_image_meta(
 
 
 # =========================
-# Step 6. train/val 무작위 분할 (baseline)
+# Step 6. train/val 분할
 # =========================
-def split_train_val_random(
+def split_train_val_strict(
     image_meta: list[dict[str, Any]],
+    merged: dict[str, dict[str, Any]],
     val_ratio: float = 0.2,
     seed: int = 42,
 ) -> tuple[list[str], list[str]]:
     """
-    baseline용 단순 무작위 분할
-    - 이미지 기준으로만 8:2 분할
-    - 계층적 분할(stratified split) 하지 않음
-    - seed 고정으로 재현 가능
+    목표:
+    - validation 비율을 최대한 맞추되
+    - 어떤 클래스도 train에서 완전히 사라지지 않도록 분할
     """
     rng = random.Random(seed)
 
     all_image_names = [x["image_name"] for x in image_meta]
     rng.shuffle(all_image_names)
 
-    n_total = len(all_image_names)
-    n_val = max(1, int(n_total * val_ratio))
+    target_val_size = max(1, int(len(all_image_names) * val_ratio))
 
-    val_images = sorted(all_image_names[:n_val])
-    train_images = sorted(all_image_names[n_val:])
+    total_class_counter: Counter[str] = Counter()
+    image_to_labels: dict[str, list[str]] = {}
+
+    for image_name in all_image_names:
+        objects = merged[image_name]["objects"]
+        labels = [obj["label"] for obj in objects]
+        image_to_labels[image_name] = labels
+        total_class_counter.update(labels)
+
+    train_class_counter = total_class_counter.copy()
+    val_images: list[str] = []
+
+    for image_name in all_image_names:
+        if len(val_images) >= target_val_size:
+            break
+
+        labels_in_image = image_to_labels[image_name]
+
+        can_move_to_val = True
+        temp_counter = train_class_counter.copy()
+
+        for label in labels_in_image:
+            temp_counter[label] -= 1
+
+        for label in set(labels_in_image):
+            if temp_counter[label] <= 0:
+                can_move_to_val = False
+                break
+
+        if can_move_to_val:
+            val_images.append(image_name)
+            train_class_counter = temp_counter
+
+    val_images = sorted(val_images)
+    val_set = set(val_images)
+    train_images = sorted([img for img in all_image_names if img not in val_set])
 
     return train_images, val_images
 
@@ -373,6 +408,36 @@ def summarize_split(
         "class_distribution": dict(class_counter),
         "objects_per_image_distribution": dict(sorted(num_objects_per_image.items())),
     }
+
+# =========================
+# Step 7. rare class oversampling
+# =========================
+
+def oversample_rare_class_images(
+    train_images: list[str],
+    image_meta: list[dict[str, Any]],
+    duplication_factor: int = 2,
+) -> list[str]:
+    """
+    train_images 중 rare class 포함 이미지를 duplication_factor 만큼 반복해서
+    oversampled train image list를 반환
+    """
+    if duplication_factor < 2:
+        return sorted(train_images)
+
+    meta_map = {item["image_name"]: item for item in image_meta}
+
+    oversampled_train_images: list[str] = []
+
+    for image_name in train_images:
+        oversampled_train_images.append(image_name)
+
+        has_rare_class = meta_map[image_name]["has_rare_class"]
+        if has_rare_class:
+            for _ in range(duplication_factor - 1):
+                oversampled_train_images.append(image_name)
+
+    return sorted(oversampled_train_images)
 
 # =========================
 # Main
@@ -418,15 +483,28 @@ def main() -> None:
     image_meta = build_image_meta(merged, rare_classes)
     print(f"[5] Built image metadata: {len(image_meta)} items")
 
-    train_images, val_images = split_train_val_random(
+    train_images, val_images = split_train_val_strict(
     image_meta=image_meta,
+    merged=merged,
     val_ratio=VAL_RATIO,
     seed=SEED,
 
     )
-    print(f"[6] Split train/val (random 8:2 baseline)")
+    print(f"[6] Split train/val")
     print(f"    - train images: {len(train_images)}")
     print(f"    - val images  : {len(val_images)}")
+
+    if OVERSAMPLE_RARE_IMAGES:
+        train_images = oversample_rare_class_images(
+            train_images=train_images,
+            image_meta=image_meta,
+            duplication_factor=RARE_IMAGE_DUPLICATION_FACTOR,
+        )
+        print(f"[7] Applied rare class image oversampling")
+        print(f"    - train images (after oversampling): {len(train_images)}")
+
+    else:
+        print(f"[7] Rare class image oversampling skipped")
 
     train_summary = summarize_split(train_images, merged)
     val_summary = summarize_split(val_images, merged)

@@ -30,13 +30,13 @@ def main() -> None:
     print(f"Runs dir: {RUNS_DIR}")
 
     # 👉 YOLO 모델 로드
-    model = YOLO("yolov8n.pt")
+    model = YOLO("yolov8s.pt")
 
     # 👉 학습
     model.train(
         data=str(DATA_YAML),
         epochs=50,
-        imgsz=640,
+        imgsz=960,
         batch=4,
         device=device,
 
@@ -44,7 +44,7 @@ def main() -> None:
         project=str(RUNS_DIR),
 
         # 실험 이름
-        name="pill_yolov8n_v2",
+        name="pill_yolov8s_v1",
 
         pretrained=True,
         verbose=True,

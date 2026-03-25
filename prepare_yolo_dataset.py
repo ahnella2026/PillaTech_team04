@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from pathlib import Path
 import json
 import shutil
@@ -8,20 +9,36 @@ from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 
-PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
+# =========================
+# Data Paths
+# =========================
 RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw" / "sprint_ai_project1_data"
+
 TRAIN_IMG_DIR = RAW_DATA_DIR / "train_images"
+TRAIN_ANN_DIR = RAW_DATA_DIR / "train_annotations"   # ⭐ 이 줄 추가
+TEST_IMG_DIR = RAW_DATA_DIR / "test_images"          # (선택이지만 추천)
+
+# =========================
+# Processed Paths
+# =========================
+PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 
 MERGED_ANNOTATIONS_PATH = PROCESSED_DIR / "merged_annotations.json"
 LABEL_MAP_PATH = PROCESSED_DIR / "label_map.json"
 TRAIN_SPLIT_PATH = PROCESSED_DIR / "train_split.json"
 VAL_SPLIT_PATH = PROCESSED_DIR / "val_split.json"
 
+# =========================
+# YOLO Dataset Paths
+# =========================
 YOLO_ROOT = PROJECT_ROOT / "data" / "yolo_dataset"
+
 YOLO_IMAGES_TRAIN = YOLO_ROOT / "images" / "train"
 YOLO_IMAGES_VAL = YOLO_ROOT / "images" / "val"
+
 YOLO_LABELS_TRAIN = YOLO_ROOT / "labels" / "train"
 YOLO_LABELS_VAL = YOLO_ROOT / "labels" / "val"
+
 YOLO_DATA_YAML = YOLO_ROOT / "dataset.yaml"
 
 
@@ -100,6 +117,44 @@ def copy_image(src: Path, dst: Path) -> None:
     shutil.copy2(src, dst)
 
 
+def copy_train_images_with_oversampling(
+    train_images: list[str],
+    src_img_dir: Path,
+    src_label_dir: Path,
+    dst_img_dir: Path,
+    dst_label_dir: Path,
+):
+    """
+    oversampling 대응:
+    같은 이미지가 여러 번 나오면 _dup1, _dup2 형태로 복사
+    """
+
+    dst_img_dir.mkdir(parents=True, exist_ok=True)
+    dst_label_dir.mkdir(parents=True, exist_ok=True)
+
+    counter = defaultdict(int)
+
+    for image_name in train_images:
+        counter[image_name] += 1
+        count = counter[image_name]
+
+        src_img_path = src_img_dir / image_name
+        src_label_path = src_label_dir / image_name.replace(".png", ".txt")
+
+        if count == 1:
+            new_image_name = image_name
+        else:
+            stem = Path(image_name).stem
+            suffix = Path(image_name).suffix
+            new_image_name = f"{stem}_dup{count-1}{suffix}"
+
+        dst_img_path = dst_img_dir / new_image_name
+        dst_label_path = dst_label_dir / new_image_name.replace(".png", ".txt")
+
+        shutil.copy(src_img_path, dst_img_path)
+        shutil.copy(src_label_path, dst_label_path)
+
+
 def save_dataset_yaml(label_map: dict[str, int]) -> None:
     id_to_label = {idx: label for label, idx in label_map.items()}
     names = [id_to_label[i] for i in range(len(id_to_label))]
@@ -126,16 +181,38 @@ def main() -> None:
 
     images_dict: dict[str, Any] = merged["images"]
 
+    # =========================
+    # Train (oversampling 적용)
+    # =========================
+    from collections import defaultdict
+
+    counter = defaultdict(int)
+
     for image_name in train_images:
+        counter[image_name] += 1
+        count = counter[image_name]
+
         image_info = images_dict[image_name]
 
         src_img = TRAIN_IMG_DIR / image_name
-        dst_img = YOLO_IMAGES_TRAIN / image_name
-        dst_label = YOLO_LABELS_TRAIN / f"{Path(image_name).stem}.txt"
+
+        # 파일명 생성 (중복이면 _dup 붙이기)
+        if count == 1:
+            new_image_name = image_name
+        else:
+            stem = Path(image_name).stem
+            suffix = Path(image_name).suffix
+            new_image_name = f"{stem}_dup{count-1}{suffix}"
+
+        dst_img = YOLO_IMAGES_TRAIN / new_image_name
+        dst_label = YOLO_LABELS_TRAIN / f"{Path(new_image_name).stem}.txt"
 
         copy_image(src_img, dst_img)
         write_label_file(image_info, label_map, dst_label)
 
+    # =========================
+    # Validation (그대로 유지)
+    # =========================
     for image_name in val_images:
         image_info = images_dict[image_name]
 
@@ -150,7 +227,3 @@ def main() -> None:
 
     print("YOLO dataset prepared.")
     print(f"dataset.yaml: {YOLO_DATA_YAML}")
-
-
-if __name__ == "__main__":
-    main()
