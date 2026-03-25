@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 import argparse
+import json
+import sys
 
 import torch
+from ruamel.yaml import YAML
 from ultralytics import YOLO
 
 
@@ -46,36 +49,123 @@ def find_default_dataset_yaml() -> Path:
     )
 
 
-def parse_args() -> argparse.Namespace:
+def load_config(config_path: Path) -> dict:
+    if not config_path.exists():
+        raise FileNotFoundError(f"config not found: {config_path}")
+
+    suffix = config_path.suffix.lower()
+    if suffix in {".yaml", ".yml"}:
+        yaml = YAML(typ="safe")
+        with config_path.open("r", encoding="utf-8") as f:
+            data = yaml.load(f) or {}
+    elif suffix == ".json":
+        with config_path.open("r", encoding="utf-8") as f:
+            data = json.load(f) or {}
+    else:
+        raise ValueError(f"Unsupported config type: {config_path} (use .yaml/.yml or .json)")
+
+    if not isinstance(data, dict):
+        raise TypeError(f"Config must be a mapping/dict, got: {type(data).__name__}")
+
+    return data
+
+
+def build_parser(defaults: dict) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=defaults.get("config"),
+        help="Path to config file (.yaml/.yml/.json). CLI args override config values.",
+    )
     parser.add_argument(
         "--data",
         type=Path,
-        default=None, # Keep auto-detection logic
+        default=Path(defaults["data"]) if defaults.get("data") else None,
         help="Path to Ultralytics dataset.yaml (default: auto-detect).",
     )
     parser.add_argument(
         "--model",
         type=str,
-        default="yolo11s.pt", # Changed default model
-        help="Model path (e.g., yolo11s.pt, yolov8n.pt)", # Updated help message
+        default=defaults.get("model", "yolo11s.pt"),
+        help="Model path (e.g., yolo11s.pt, yolov8n.pt)",
     )
-    parser.add_argument("--epochs", type=int, default=50, help='number of epochs') # Added help message
-    parser.add_argument("--imgsz", type=int, default=640, help='image size') # Added help message
-    parser.add_argument("--batch", type=int, default=32, help='batch size') # Changed default batch size and added help message
-    parser.add_argument("--name", type=str, default="pill_exp2_yolo11s", help='experiment name') # Changed default name and added help message
+    parser.add_argument("--epochs", type=int, default=int(defaults.get("epochs", 50)), help="number of epochs")
+    parser.add_argument("--imgsz", type=int, default=int(defaults.get("imgsz", 640)), help="image size")
+    parser.add_argument("--batch", type=int, default=int(defaults.get("batch", 32)), help="batch size")
+    parser.add_argument(
+        "--name",
+        type=str,
+        default=defaults.get("name", "pill_exp2_yolo11s"),
+        help="experiment name",
+    )
     parser.add_argument(
         "--device",
         type=str,
-        default='0', # Changed default device
-        help="cuda device, i.e. 0 or 0,1,2,3 or cpu", # Updated help message
+        default=defaults.get("device", "0"),
+        help="cuda device, i.e. 0 or 0,1,2,3 or cpu",
     )
-    # --- 증강(Augmentation) 제어용 인자 추가 --- #
-    parser.add_argument("--fliplr", type=float, default=0.5, help="horizontal flip probability (default: 0.5)")
-    parser.add_argument("--flipud", type=float, default=0.0, help="vertical flip probability (default: 0.0)")
-    parser.add_argument("--degrees", type=float, default=0.0, help="image rotation degrees (default: 0.0)")
-    parser.add_argument("--mosaic", type=float, default=1.0, help="mosaic augmentation probability (default: 1.0)")
-    
+    # --- 증강(Augmentation) 제어용 인자 --- #
+    parser.add_argument(
+        "--fliplr",
+        type=float,
+        default=float(defaults.get("fliplr", 0.5)),
+        help="horizontal flip probability",
+    )
+    parser.add_argument(
+        "--flipud",
+        type=float,
+        default=float(defaults.get("flipud", 0.0)),
+        help="vertical flip probability",
+    )
+    parser.add_argument(
+        "--degrees",
+        type=float,
+        default=float(defaults.get("degrees", 0.0)),
+        help="image rotation degrees",
+    )
+    parser.add_argument(
+        "--mosaic",
+        type=float,
+        default=float(defaults.get("mosaic", 1.0)),
+        help="mosaic augmentation probability",
+    )
+
+    return parser
+
+
+def parse_args() -> argparse.Namespace:
+    base = argparse.ArgumentParser(add_help=False)
+    base.add_argument("--config", type=Path, default=None)
+    known, _ = base.parse_known_args()
+
+    defaults: dict = {}
+    if known.config:
+        defaults = load_config(known.config)
+        defaults["config"] = known.config
+
+        allowed_keys = {
+            "config",
+            "data",
+            "model",
+            "epochs",
+            "imgsz",
+            "batch",
+            "name",
+            "device",
+            "fliplr",
+            "flipud",
+            "degrees",
+            "mosaic",
+        }
+        unknown_keys = sorted(set(defaults.keys()) - allowed_keys)
+        if unknown_keys:
+            print(
+                f"Warning: ignoring unknown config keys: {unknown_keys}",
+                file=sys.stderr,
+            )
+
+    parser = build_parser(defaults)
     return parser.parse_args()
 
 
@@ -83,6 +173,9 @@ def main() -> None:
     args = parse_args()
     device = args.device or get_device()
     print(f"Using device: {device}")
+
+    if args.config:
+        print(f"Config: {args.config}")
 
     print(f"Project root: {PROJECT_ROOT}")
     print(f"Runs dir: {RUNS_DIR}")
