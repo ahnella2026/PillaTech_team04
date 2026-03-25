@@ -1,3 +1,12 @@
+"""
+모델 1개로 이미지들을 추론해서 결과를 1개의 CSV로 저장하는 범용 inference 스크립트.
+예원 test.py를 수정한 버전임. 
+
+기본적으로는 `test_images`를 대상으로 Kaggle 제출용 CSV를 생성하는 데 사용함. 
+(다만 입력 이미지 경로를 바꾸면 `validation` 이미지에 대해서도 동일한 형식의
+예측 CSV를 만들 수 있음.) 
+"""
+
 import argparse
 import os
 import pandas as pd
@@ -26,6 +35,19 @@ def parse_args():
     parser.add_argument("--data", type=str, default=str(DEFAULT_YAML_PATH), help="Path to dataset.yaml")
     parser.add_argument("--test_images", type=str, default=str(DEFAULT_TEST_IMG_DIR), help="Path to test images folder")
     parser.add_argument("--json_dir", type=str, default=str(DEFAULT_JSON_DIR), help="Path to raw COCO annotations to build label map")
+    parser.add_argument(
+        "--save-config",
+        dest="save_config",
+        action="store_true",
+        help="Save the current inference arguments as a reproducibility config",
+    )
+    parser.add_argument(
+        "--no-save-config",
+        dest="save_config",
+        action="store_false",
+        help="Do not auto-save an inference config file",
+    )
+    parser.set_defaults(save_config=True)
     return parser.parse_args()
 
 def get_next_exp_id(config_dir):
@@ -184,7 +206,7 @@ def run_test_and_save_csv():
     print(f"\n✅ 분석 완료! 파일 저장됨: {os.path.abspath(OUTPUT_CSV)}")
     
     # --- Auto Logging Logic --- #
-    if not cli_args.config: # Only save if we ran with manual CLI args (to create a new guide)
+    if cli_args.save_config and not cli_args.config:
         next_id = get_next_exp_id(PROJECT_ROOT / "configs")
         save_inference_config(cli_args, next_id)
 

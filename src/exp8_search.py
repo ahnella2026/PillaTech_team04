@@ -1,12 +1,25 @@
-# [Design Intent] L3 Standard: Validation 셋 기반 동적 임계값(NMS Threshold) 탐색 스크립트.
-# 매직 넘버(conf=0.20, iou=0.60)를 버리고 실제 데이터(Val)에서 가장 높은 mAP를 끌어내는 파라미터를 찾는다.
+"""
+Validation 셋 기준으로 NMS 임계값(conf, iou)을 탐색하는 스크립트.
+
+학습이 끝난 가중치에 대해 여러 conf/iou 조합으로 `validation` 성능을 반복 평가하고,
+가장 좋은 조합과 mAP 결과를 확인한다. 최종 탐색 결과는 metrics JSON으로 저장해
+`experiments.md` 업데이트나 추론 설정 재현에 활용할 수 있다.
+"""
+
 import argparse
 import gc
+import json
 import time
 import sys
+import re
+from pathlib import Path
 import torch
 import pandas as pd
 from ultralytics import YOLO
+
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+METRICS_DIR = PROJECT_ROOT / "metrics"
 
 
 def parse_args() -> argparse.Namespace:
@@ -54,6 +67,18 @@ def validate_thresholds(values: list[float], name: str) -> None:
 
 def default_device() -> str:
     return "0" if torch.cuda.is_available() else "cpu"
+
+
+def infer_source_experiment(model_path: str) -> str | None:
+    match = re.search(r"(?:^|[/_])exp[_-]?(\d+)(?:[^0-9]|$)", model_path, flags=re.IGNORECASE)
+    if not match:
+        match = re.search(r"pill_exp(\d+)", model_path, flags=re.IGNORECASE)
+    return f"exp{match.group(1)}" if match else None
+
+
+def infer_model_name(model_path: str) -> str | None:
+    match = re.search(r"(yolo\d+[a-z]+|yolov\d+[a-z]+|rtdetr[\w-]*)", model_path, flags=re.IGNORECASE)
+    return match.group(1) if match else None
 
 
 def main() -> None:
@@ -142,12 +167,31 @@ def main() -> None:
     print("=" * 50, flush=True)
     
     best_row = df.iloc[0]
+    metrics_payload = {
+        "experiment": "exp8",
+        "dataset_split": "val",
+        "model": model_path,
+        "model_name": infer_model_name(model_path),
+        "source_experiment": infer_source_experiment(model_path),
+        "data": data_path,
+        "epoch": None,
+        "best_epoch": None,
+        "best_conf": float(best_row["conf"]),
+        "best_iou": float(best_row["iou"]),
+        "mAP50": float(best_row["mAP@50"]),
+        "mAP50-95": float(best_row["mAP@50-95"]),
+        "rankings": results_list,
+    }
+    METRICS_DIR.mkdir(parents=True, exist_ok=True)
+    metrics_path = METRICS_DIR / "exp8_val_metrics.json"
+    metrics_path.write_text(json.dumps(metrics_payload, indent=2), encoding="utf-8")
     print(f"\n✅ [최종 결론] 앞으로 추론(test_custom.py) 시 추천하는 설정값:", flush=True)
     print(f"👉 python src/test_custom.py --model {model_path} --conf {best_row['conf']:.2f}", flush=True)
     print(
         f"   (주의: test_custom.py 내에 iou={best_row['iou']:.2f} 로직이 없다면 코드에 iou값도 반영할 것)",
         flush=True,
     )
+    print(f"💾 metrics saved to: {metrics_path}", flush=True)
 
 if __name__ == "__main__":
     main()

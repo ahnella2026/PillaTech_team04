@@ -1,0 +1,8 @@
+conf: 0.2
+data: /home/imella0707/PillaTech_team04/data/yolo_dataset/dataset.yaml
+imgsz: 960
+iou: 0.6
+json_dir: /home/imella0707/PillaTech_team04/data/raw/sprint_ai_project1_data/train_annotations
+model: runs/pill_exp5_yolo11s_copypaste/weights/best.pt
+output: submission/exp9_submission_960.csv
+test_images: /home/imella0707/PillaTech_team04/data/raw/sprint_ai_project1_data/test_images

@@ -1,8 +1,17 @@
 from __future__ import annotations
 
+"""
+YOLO 학습과 validation 평가를 한 번에 수행하는 학습 스크립트.
+
+설정 파일 또는 CLI 인자를 받아 모델을 학습한 뒤, 같은 실험의 `validation` 성능을
+평가해 mAP 지표를 출력한다. 최종 성능 결과는 metrics JSON으로 저장해
+`experiments.md` 기록 및 실험 비교의 기준값으로 사용한다.
+"""
+
 from pathlib import Path
 import argparse
 import json
+import re
 import sys
 
 import torch
@@ -15,6 +24,7 @@ DEFAULT_DATA_YAML_LEGACY = PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yam
 DEFAULT_DATA_YAML_CLEANED = (
     PROJECT_ROOT / "data" / "yolo_cleaned" / "seed_777" / "dataset.yaml"
 )
+METRICS_DIR = PROJECT_ROOT / "metrics"
 
 # 👉 runs 경로를 절대경로로 고정 (핵심)
 RUNS_DIR = PROJECT_ROOT / "runs"
@@ -169,6 +179,18 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def infer_source_experiment(model_path: str) -> str | None:
+    match = re.search(r"(?:^|[/_])exp[_-]?(\d+)(?:[^0-9]|$)", model_path, flags=re.IGNORECASE)
+    if not match:
+        match = re.search(r"pill_exp(\d+)", model_path, flags=re.IGNORECASE)
+    return f"exp{match.group(1)}" if match else None
+
+
+def infer_model_name(model_path: str) -> str:
+    match = re.search(r"(yolo\d+[a-z]+|yolov\d+[a-z]+|rtdetr[\w-]*)", model_path, flags=re.IGNORECASE)
+    return match.group(1) if match else model_path
+
+
 def main() -> None:
     args = parse_args()
     device = args.device or get_device()
@@ -242,6 +264,24 @@ def main() -> None:
     map50 = val_results.results_dict['metrics/mAP50(B)']
     map75 = val_results.maps[5]
     map50_95 = val_results.results_dict['metrics/mAP50-95(B)']
+    metrics_payload = {
+        "experiment": args.name,
+        "dataset_split": "val",
+        "data": str(data_yaml),
+        "model_path": args.model,
+        "model_name": infer_model_name(args.model),
+        "source_experiment": infer_source_experiment(args.model),
+        "epoch": int(args.epochs),
+        "imgsz": int(args.imgsz),
+        "batch": int(args.batch),
+        "best_epoch": int(getattr(val_results, "epoch", args.epochs)),
+        "mAP50": float(map50),
+        "mAP75": float(map75),
+        "mAP50-95": float(map50_95),
+    }
+    METRICS_DIR.mkdir(parents=True, exist_ok=True)
+    metrics_path = METRICS_DIR / f"{args.name}_val_metrics.json"
+    metrics_path.write_text(json.dumps(metrics_payload, indent=2), encoding="utf-8")
     
     print("\n" + "=" * 60)
     print(f"      EXPERIMENT REPORT: {args.name}")
@@ -249,6 +289,7 @@ def main() -> None:
     print(f" ➡️  mAP@50:    {map50:.4f}")
     print(f" ➡️  mAP@75:    {map75:.4f}")
     print(f" ➡️  mAP@50-95: {map50_95:.4f}")
+    print(f" ➡️  saved:     {metrics_path}")
     print("=" * 60 + "\n")
 
 
