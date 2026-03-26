@@ -15,7 +15,7 @@ import re
 import sys
 
 import torch
-from ruamel.yaml import YAML
+import yaml
 from ultralytics import YOLO
 
 
@@ -65,9 +65,8 @@ def load_config(config_path: Path) -> dict:
 
     suffix = config_path.suffix.lower()
     if suffix in {".yaml", ".yml"}:
-        yaml = YAML(typ="safe")
         with config_path.open("r", encoding="utf-8") as f:
-            data = yaml.load(f) or {}
+            data = yaml.safe_load(f) or {}
     elif suffix == ".json":
         with config_path.open("r", encoding="utf-8") as f:
             data = json.load(f) or {}
@@ -140,6 +139,31 @@ def build_parser(defaults: dict) -> argparse.ArgumentParser:
         default=float(defaults.get("mosaic", 1.0)),
         help="mosaic augmentation probability",
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=int(defaults.get("seed", 0)),
+        help="random seed for reproducibility",
+    )
+    parser.add_argument(
+        "--deterministic",
+        action="store_true",
+        default=bool(defaults.get("deterministic", True)),
+        help="enable deterministic mode",
+    )
+
+    parser.add_argument(
+        "--copy_paste",
+        type=float,
+        default=float(defaults.get("copy_paste", 0.0)),
+        help="copy-paste augmentation probability",
+    )
+    parser.add_argument(
+        "--mixup",
+        type=float,
+        default=float(defaults.get("mixup", 0.0)),
+        help="mixup augmentation probability",
+    )
 
     return parser
 
@@ -167,6 +191,10 @@ def parse_args() -> argparse.Namespace:
             "flipud",
             "degrees",
             "mosaic",
+            "copy_paste",
+            "mixup",
+            "seed",
+            "deterministic",
         }
         unknown_keys = sorted(set(defaults.keys()) - allowed_keys)
         if unknown_keys:
@@ -238,12 +266,16 @@ def main() -> None:
         flipud=args.flipud,
         degrees=args.degrees,
         mosaic=args.mosaic,
+        copy_paste=args.copy_paste,
+        mixup=args.mixup,
         
         # === 최적화 설정 (기본값 위주) ===
         lr0=0.01,
         lrf=0.01,
         warmup_epochs=3.0,
         cos_lr=True,
+        seed=args.seed,
+        deterministic=args.deterministic,
     )
 
     print("Training finished. Evaluating best model metrics...")

@@ -15,19 +15,28 @@ import re
 from ensemble_boxes import weighted_boxes_fusion
 import argparse
 
-def get_image_sizes(test_dir):
+def get_image_sizes(image_dir):
     sizes = {}
-    for img_name in os.listdir(test_dir):
+    for img_name in os.listdir(image_dir):
         if not img_name.lower().endswith(('.png', '.jpg', '.jpeg')): continue
         image_id_str = "".join(re.findall(r'\d+', img_name))
         if not image_id_str: continue
         image_id = int(image_id_str)
-        img_path = os.path.join(test_dir, img_name)
+        img_path = os.path.join(image_dir, img_name)
         img = cv2.imread(img_path)
         if img is not None:
             h, w = img.shape[:2]
             sizes[image_id] = (w, h)
     return sizes
+
+
+def resolve_image_dir(csv_paths, image_dir):
+    if image_dir:
+        return image_dir
+    # Auto-detect based on csv filename hints.
+    if 'val' in csv_paths[0]:
+        return 'data/yolo_dataset/images/val'
+    return 'data/raw/sprint_ai_project1_data/test_images'
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -53,10 +62,10 @@ def parse_args():
         help='Output path for the fused submission CSV',
     )
     parser.add_argument(
-        '--test_dir',
+        '--image_dir',
         type=str,
-        default='data/raw/sprint_ai_project1_data/test_images',
-        help='Test image directory used to recover original image sizes',
+        default=None,
+        help='Image directory used for box normalization (test or val).',
     )
     return parser.parse_args()
 
@@ -74,8 +83,12 @@ def main():
     total_boxes = sum(len(df) for df in df_list)
     print(f" 병합 전 총 Bounding Box 수: {total_boxes}")
 
-    print(f" Reading image sizes from {args.test_dir} (WBF normalization requires W/H)...")
-    img_sizes = get_image_sizes(args.test_dir)
+    args.image_dir = resolve_image_dir(csv_paths, args.image_dir)
+    print(f" Reading image sizes from {args.image_dir} (WBF normalization requires W/H)...")
+    img_sizes = get_image_sizes(args.image_dir)
+    
+    if not img_sizes:
+        raise ValueError(f"No images found in {args.image_dir}. WBF cannot normalize coordinates without valid width/height.")
     
     all_image_ids = set()
     for df in df_list:

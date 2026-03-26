@@ -33,7 +33,7 @@ echo "[4/5] WBF ensemble -> submission/exp9_val_final_wbf.csv"
     --csvs submission/exp9_val_640.csv submission/exp9_val_960.csv submission/exp9_val_1024.csv \
     --output submission/exp9_val_final_wbf.csv \
     --iou 0.60 \
-    --test_dir "$VAL_IMAGE_DIR"
+    --image_dir "$VAL_IMAGE_DIR"
 
 echo "=================================================="
 echo "[5/5] Evaluate WBF CSV on val labels"
