@@ -25,33 +25,48 @@ DEFAULT_YAML_PATH = PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
 DEFAULT_JSON_DIR = PROJECT_ROOT / "data" / "raw" / "sprint_ai_project1_data" / "train_annotations"
 
 def parse_args():
+    """
+    터미널 인자(CLI)를 파싱하는 함수.
+    [우선순위] 1. 사용자가 직접 입력한 인자 > 2. Config YAML 파일 > 3. 아래 설정된 기본값(Default)
+    """
     parser = argparse.ArgumentParser(description="Professional Inference Script for Kaggle Submission (Custom Version)")
-    parser.add_argument("--config", type=str, default=None, help="Path to inference config yaml file")
-    parser.add_argument("--model", type=str, default=None, help="Path to best.pt model")
-    parser.add_argument("--imgsz", type=int, default=1024, help="Inference resolution")
-    parser.add_argument("--conf", type=float, default=0.25, help="Confidence threshold")
-    parser.add_argument("--iou", type=float, default=0.70, help="NMS IoU threshold (default: 0.70)")
-    parser.add_argument("--output", type=str, default="submission.csv", help="Output filename")
-    parser.add_argument("--data", type=str, default=str(DEFAULT_YAML_PATH), help="Path to dataset.yaml")
-    parser.add_argument("--test_images", type=str, default=str(DEFAULT_TEST_IMG_DIR), help="Path to test images folder")
-    parser.add_argument("--json_dir", type=str, default=str(DEFAULT_JSON_DIR), help="Path to raw COCO annotations to build label map")
+    
+    # 설정 파일 관련
+    parser.add_argument("--config", type=str, default=None, help="실행 설정을 담은 yaml 파일 경로 (사용 시 아래 기본값들을 무시하고 덮어씌움)")
+    
+    # 모델 및 성능 관련
+    parser.add_argument("--model", type=str, default=None, help="학습된 YOLO 모델 가중치 파일(*.pt) 경로 (필수)")
+    parser.add_argument("--imgsz", type=int, default=1024, help="추론 시 사용할 이미지 해상도 (기본값: 1024)")
+    parser.add_argument("--conf", type=float, default=0.25, help="검출 신뢰도 임계값 (기본값: 0.25)")
+    parser.add_argument("--iou", type=float, default=0.60, help="NMS 수행 시 사용할 IoU 임계값 (기본값 0.60, 0.70보다 보수적인 설정)")
+    
+    # 입출력 경로 관련
+    parser.add_argument("--output", type=str, default="submission.csv", help="결과를 저장할 CSV 파일명")
+    parser.add_argument("--data", type=str, default=str(DEFAULT_YAML_PATH), help="학습 시 사용한 dataset.yaml 경로 (클래스 이름 매핑용)")
+    parser.add_argument("--test_images", type=str, default=str(DEFAULT_TEST_IMG_DIR), help="추론을 수행할 이미지들이 담긴 폴더 경로")
+    parser.add_argument("--json_dir", type=str, default=str(DEFAULT_JSON_DIR), help="원본 COCO 어노테이션 폴더 (클래스 ID 역매핑을 위한 원본 정보 추출용)")
+    
+    # 실험 관리 (Reproducibility) 관련
     parser.add_argument(
         "--save-config",
         dest="save_config",
         action="store_true",
-        help="Save the current inference arguments as a reproducibility config",
+        help="추론 설정을 configs/ 폴더에 yaml 파일로 자동 저장할지 여부",
     )
     parser.add_argument(
         "--no-save-config",
         dest="save_config",
         action="store_false",
-        help="Do not auto-save an inference config file",
+        help="설정 파일 자동 저장을 비활성화",
     )
     parser.set_defaults(save_config=True)
     return parser.parse_args()
 
 def get_next_exp_id(config_dir):
-    """Automatically find the next experiment ID by scanning the configs/ directory."""
+    """
+    configs/ 폴더를 탐색하여 중복되지 않는 다음 실험 번호(ID)를 자동으로 찾는 함수.
+    예: exp0, exp1이 있으면 2를 반환함.
+    """
     if not os.path.exists(config_dir):
         os.makedirs(config_dir)
         return 0
@@ -65,7 +80,10 @@ def get_next_exp_id(config_dir):
     return max(existing_nums) + 1 if existing_nums else 0
 
 def save_inference_config(args, next_id):
-    """Save the current inference settings to a yaml file for reproducibility."""
+    """
+    현재 실행에 사용된 모든 하이퍼파라미터와 경로 설정을 configs/ 폴더에 yaml로 저장하는 함수.
+    나중에 이 파일을 --config 인자로 넘기면 동일한 설정을 완벽하게 재현 가능함.
+    """
     config_dir = PROJECT_ROOT / "configs"
     filename = f"exp{next_id}_inference.yaml"
     save_path = config_dir / filename
@@ -82,11 +100,18 @@ def save_inference_config(args, next_id):
     return save_path
 
 def run_test_and_save_csv():
+    """
+    전체 추론 프로세스를 관리하는 메인 실행 함수.
+    1. 인자 파싱 및 설정 로드
+    2. 클래스 ID 역매핑 (YOLO -> 오리지널 COCO ID)
+    3. 모델 로드 및 배치 추론
+    4. 결과를 Kaggle 양식의 CSV로 저장
+    """
     cli_args = parse_args()
     
     # --- Config Loading Logic --- #
     if cli_args.config:
-        print(f"📂 Loading config from: {cli_args.config}")
+        print(f"Loading config from: {cli_args.config}")
         with open(cli_args.config, 'r', encoding='utf-8') as f:
             config_data = yaml.safe_load(f)
         
@@ -96,7 +121,7 @@ def run_test_and_save_csv():
             setattr(cli_args, key, value)
     
     if cli_args.model is None:
-        print("❌ Error: --model is required (either via CLI or --config file)")
+        print("Error: --model is required (either via CLI or --config file)")
         return
 
     # Set derived variables
@@ -132,7 +157,7 @@ def run_test_and_save_csv():
                 except:
                     pass
     
-    print(f"✅ JSON에서 총 {len(json_category_map)}개의 고유 알약 카테고리를 찾아냈습니다.\n")
+    print(f" JSON에서 총 {len(json_category_map)}개의 고유 알약 카테고리를 찾아냈습니다.\n")
 
     # C. 스마트 매핑 시작
     inverse_class_map = {}
@@ -149,12 +174,12 @@ def run_test_and_save_csv():
                 best_match = possible_matches[0]
                 matched_id = json_category_map[best_match]
                 inverse_class_map[int(yolo_id)] = matched_id
-                print(f"💡 자동 보정 성공: '{yaml_name}' -> JSON의 '{original_json_names[best_match]}' (ID: {matched_id})")
+                print(f" 자동 보정 성공: '{yaml_name}' -> JSON의 '{original_json_names[best_match]}' (ID: {matched_id})")
             else:
                 unmapped_classes.append(yaml_name)
 
     if not unmapped_classes:
-        print("\n🎉 모든 알약의 클래스 매핑이 완벽하게 완료되었습니다!\n")
+        print("\n 모든 알약의 클래스 매핑이 완벽하게 완료되었습니다!\n")
 
     # ---------------------------------------------------------
     # 3. 모델 로드 및 추론
@@ -170,7 +195,7 @@ def run_test_and_save_csv():
     results_list = []
     ann_id_counter = 1 
 
-    print(f"🚀 총 {len(image_files)}장의 이미지에 대해 검출을 시작합니다.")
+    print(f" 총 {len(image_files)}장의 이미지에 대해 검출을 시작합니다.")
     for idx, img_name in enumerate(image_files):
         if idx % 100 == 0:
             print(f"   - Processing image {idx}/{len(image_files)}...")
