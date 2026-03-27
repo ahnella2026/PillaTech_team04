@@ -31,6 +31,7 @@
 - 전처리: invalid / missing bbox 처리
 - 학습: epochs=50, imgsz=960
 <br/>
+
 결과
 - mAP50: 0.8697
 - mAP50-95: 0.8414
@@ -43,6 +44,7 @@
 - rare class 포함 이미지 oversampling
 - 나머지 설정 동일 (YOLOv8n 유지)
 <br/>
+
 결과
 - mAP50 ≈ 0.87
 - mAP50-95 ≈ 0.84
@@ -55,6 +57,7 @@
 - 모델: YOLOv8n → YOLOv8s
 - rare class oversampling 유지
 <br/>
+
 결과
 - mAP50 ≈ 0.99
 - mAP50-95 ≈ 0.97
@@ -72,6 +75,7 @@
 - false_positive
 3. 해당 이미지 train에 복제
 <br/>
+
 결과
 - Num hard images: 5 -> 복제 후: 10장
 - 이미 모델 성능이 충분히 높은 상태이며, hard sample 비율이 너무 적어서 성능 변화 거의 없음.
@@ -87,6 +91,7 @@
     - degrees=15
 - optimizer: AdamW
 <br/>
+
 결과
 - mAP50: 0.838
 - mAP50-95: 0.747
@@ -105,11 +110,13 @@
 - augmentation 유지
 - TTA 적용
 <br/>
+
 결과
 - mAP@[0.75:0.95] ≈ 0.95199
 - Precision ≈ 0.94 ~ 0.96
 - Recall ≈ 0.97+
----
+<br/>
+
 ### **Overall Comparison**
 | Experiment | Model | Key Change        | mAP50    | mAP50-95 | Recall    |
 | ---------- | ----- | ----------------- | -------- | -------- | --------- |
