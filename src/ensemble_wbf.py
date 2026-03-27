@@ -1,5 +1,5 @@
 """
-test_custom_v5.py을 통해 만든 여러 개의 예측 CSV 파일을 Weighted Box Fusion(WBF)으로 하나의 최종 제출 파일로 병합하는 스크립트.
+test_custom_v12.py를 통해 만든 여러 개의 예측 CSV 파일을 Weighted Box Fusion(WBF)으로 하나의 최종 제출 파일로 병합하는 스크립트.
 
 이 스크립트는 입력 CSV들이 동일한 submission 스키마를 따르는 경우,
 다음과 같은 다양한 앙상블 실험에서 재사용할 수 있습니다:

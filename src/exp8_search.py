@@ -185,10 +185,10 @@ def main() -> None:
     METRICS_DIR.mkdir(parents=True, exist_ok=True)
     metrics_path = METRICS_DIR / "exp8_val_metrics.json"
     metrics_path.write_text(json.dumps(metrics_payload, indent=2), encoding="utf-8")
-    print(f"\n✅ [최종 결론] 앞으로 추론(test_custom.py) 시 추천하는 설정값:", flush=True)
-    print(f"👉 python src/test_custom.py --model {model_path} --conf {best_row['conf']:.2f}", flush=True)
+    print(f"\n✅ [최종 결론] 앞으로 추론(test_custom_v12.py) 시 추천하는 설정값:", flush=True)
+    print(f"👉 python src/test_custom_v12.py --model {model_path} --conf {best_row['conf']:.2f}", flush=True)
     print(
-        f"   (주의: test_custom.py 내에 iou={best_row['iou']:.2f} 로직이 없다면 코드에 iou값도 반영할 것)",
+        f"   (주의: test_custom_v12.py 내에 iou={best_row['iou']:.2f} 로직이 없다면 코드에 iou값도 반영할 것)",
         flush=True,
     )
     print(f"💾 metrics saved to: {metrics_path}", flush=True)

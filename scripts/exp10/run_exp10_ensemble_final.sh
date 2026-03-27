@@ -1,6 +1,6 @@
 #!/bin/bash
 # scripts/exp10/run_exp10_ensemble_final.sh
-# 이 스크립트는 프로젝트 루트(/home/imella0707/PillaTech_team04)에서 실행해야 합니다.
+# 이 스크립트는 프로젝트 루트(PillaTech_team04)에서 실행해야 합니다.
 # 실행 예: bash scripts/exp10/run_exp10_ensemble_final.sh
 
 # 1. 디렉토리 준비
@@ -28,13 +28,13 @@ for SEED in "${SEEDS[@]}"; do
     
     # A. 캐글 제출용 (Test Images)
     echo "   > Inferencing on TEST set..."
-    python src/test_custom.py --model "$WEIGHTS" \
+    python src/test_custom_v12.py --model "$WEIGHTS" \
         --imgsz 960 --conf 0.20 --iou 0.60 \
         --output submission/exp10_seed${SEED}_test.csv --no-save-config
     
     # B. 로컬 검증용 (Val Images)
     echo "   > Inferencing on VALIDATION set..."
-    python src/test_custom.py --model "$WEIGHTS" \
+    python src/test_custom_v12.py --model "$WEIGHTS" \
         --imgsz 960 --conf 0.20 --iou 0.60 \
         --test_images data/yolo_dataset/images/val \
         --output submission/exp10_val/exp10_seed${SEED}_val.csv --no-save-config
