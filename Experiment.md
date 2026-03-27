@@ -25,14 +25,14 @@
 ---
 ## 4.  📊 Training Results
 ### 🔬 **Exp1. Baseline (계층적 분할 + YOLOv8n)**
-설정
+**설정**
 - 모델: YOLOv8n (Nano)
 - 데이터 분할: 다중 계층적 분할
 - 전처리: invalid / missing bbox 처리
 - 학습: epochs=50, imgsz=960
 <br/>
 
-결과
+**결과**
 - mAP50: 0.8697
 - mAP50-95: 0.8414
 - Precision: 0.9009
@@ -40,12 +40,12 @@
 <br/>
 
 ### 🔬 **Exp2. Rare Class Oversampling**
-변경점
+**변경점**
 - rare class 포함 이미지 oversampling
 - 나머지 설정 동일 (YOLOv8n 유지)
 <br/>
 
-결과
+**결과**
 - mAP50 ≈ 0.87
 - mAP50-95 ≈ 0.84
 - Precision ≈ 0.90+
@@ -53,12 +53,12 @@
 <br/>
 
 ### 🔬 **Exp3. YOLOv8s 모델 확장**
-변경점
+**변경점**
 - 모델: YOLOv8n → YOLOv8s
 - rare class oversampling 유지
 <br/>
 
-결과
+**결과**
 - mAP50 ≈ 0.99
 - mAP50-95 ≈ 0.97
 - mAP75-95 ≈ 0.95
@@ -67,7 +67,7 @@
 <br/>
 
 ### 🔬 **Exp4. Hard Example Mining (HEM)**
-방법
+**방법**
 1. best.pt로 train 이미지 재추론
 2. GT와 비교하여 hard image 선정
 - missed_gt
@@ -76,13 +76,13 @@
 3. 해당 이미지 train에 복제
 <br/>
 
-결과
+**결과**
 - Num hard images: 5 -> 복제 후: 10장
 - 이미 모델 성능이 충분히 높은 상태이며, hard sample 비율이 너무 적어서 성능 변화 거의 없음.
 <br/>
 
 ### 🔬 **Exp5. YOLOv8m + Augmentation**
-변경점
+**변경점**
 - 모델: YOLOv8m
 - imgsz: 640
 - augmentation:
@@ -92,7 +92,7 @@
 - optimizer: AdamW
 <br/>
 
-결과
+**결과**
 - mAP50: 0.838
 - mAP50-95: 0.747
 - Precision: 0.905
@@ -104,14 +104,14 @@
 <br/>
 
 ### 🔬 **Exp6. YOLOv8m 개선 (고해상도 + box weight + TTA)**
-변경점
+**변경점**
 - imgsz: 960 (복구)
 - box loss weight 증가 (box=15.0)
 - augmentation 유지
 - TTA 적용
 <br/>
 
-결과
+**결과**
 - mAP@[0.75:0.95] ≈ 0.95199
 - Precision ≈ 0.94 ~ 0.96
 - Recall ≈ 0.97+
