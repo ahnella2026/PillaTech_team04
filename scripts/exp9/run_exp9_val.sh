@@ -17,15 +17,15 @@ echo " - python: ${PYTHON_BIN}"
 
 echo "=================================================="
 echo "[1/5] 640px val inference -> submission/exp9_val_640.csv"
-"${PYTHON_BIN}" src/test_custom.py --model "$MODEL_PATH" --imgsz 640 --conf 0.20 --iou 0.60 --output submission/exp9_val_640.csv --test_images "$VAL_IMAGE_DIR" --no-save-config
+"${PYTHON_BIN}" src/test_custom_v12.py --model "$MODEL_PATH" --imgsz 640 --conf 0.20 --iou 0.60 --output submission/exp9_val_640.csv --test_images "$VAL_IMAGE_DIR" --no-save-config
 
 echo "=================================================="
 echo "[2/5] 960px val inference -> submission/exp9_val_960.csv"
-"${PYTHON_BIN}" src/test_custom.py --model "$MODEL_PATH" --imgsz 960 --conf 0.20 --iou 0.60 --output submission/exp9_val_960.csv --test_images "$VAL_IMAGE_DIR" --no-save-config
+"${PYTHON_BIN}" src/test_custom_v12.py --model "$MODEL_PATH" --imgsz 960 --conf 0.20 --iou 0.60 --output submission/exp9_val_960.csv --test_images "$VAL_IMAGE_DIR" --no-save-config
 
 echo "=================================================="
 echo "[3/5] 1024px val inference -> submission/exp9_val_1024.csv"
-"${PYTHON_BIN}" src/test_custom.py --model "$MODEL_PATH" --imgsz 1024 --conf 0.20 --iou 0.60 --output submission/exp9_val_1024.csv --test_images "$VAL_IMAGE_DIR" --no-save-config
+"${PYTHON_BIN}" src/test_custom_v12.py --model "$MODEL_PATH" --imgsz 1024 --conf 0.20 --iou 0.60 --output submission/exp9_val_1024.csv --test_images "$VAL_IMAGE_DIR" --no-save-config
 
 echo "=================================================="
 echo "[4/5] WBF ensemble -> submission/exp9_val_final_wbf.csv"
