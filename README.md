@@ -84,10 +84,12 @@ PillaTech_team04/
 - **`prepare_yolo_dataset.py`**: 병합된 JSON을 YOLO 학습용 디렉토리 구조 및 라벨 파일로 변환.
 - **`train_yolov11.py`**: `configs/train/` 파일을 읽어 학습을 수행하고 `metrics/`에 결과를 자동 저장.
 - **`src/test_custom_v12.py`**: CLI 인자와 `configs/inference/`를 지원하는 범용 추론 스크립트.
-- **`src/test_legacy.py`**: (구 `test.py`) 예원님 원본 버전. 하드코딩 경로 사용 시 참고용.
+-
 
 > [!NOTE]
 > `configs/train/*.yaml`의 `copy_paste`는 **Ultralytics YOLO 내부 증강(augmentation)기법 옵션**입니다. Exp 5에서 사용한 "커스텀 합성 데이터로 데이터셋 자체를 증량(희귀 클래스 증강, Copy Paste)"하는 방식과는 별개이며, Exp5 방식의 (데이터셋 자체 증량)은 YOLO의 copy_paste 파라미터가 아니라, dataset.yaml이 가리키는 실제 학습 데이터 폴더에 합성 결과가 들어가 있느냐로 결정됩니다
+
+ > `src/test_legacy.py`: (구 `test.py`) 실수 방지 목적으로 예원님 원본 버전 삭제함 
 
 ---
 
@@ -124,10 +126,18 @@ python prepare_yolo_dataset.py
 ```
 
 ### 3단계: 학습 시작 (Exp 12 상속)
-Exp 12의 정제된 설정을 재현하거나 이를 바탕으로 새 실험을 시작하려면:
-```bash
-python train_yolov11.py --config configs/train/exp12_train_yolo11s_noflip.yaml
-```
+Exp 12 실험을 재현하거나 이를 바탕으로 새 실험을 시작하려면 다음을 참고하세요:
+
+1. **기본 데이터셋**: `data/yolo_dataset/dataset.yaml` 경로를 기본으로 사용합니다. 별도 명시가 없으면 이 경로의 데이터를 불러옵니다.
+   ```bash
+   python train_yolov11.py --config configs/train/exp12_train_yolo11s_noflip.yaml
+   ```
+
+2. **커스텀 데이터셋**: 다른 경로의 데이터셋을 사용하고 싶다면 `--data` 옵션으로 명시하면 됩니다.
+   ```bash
+   # 다른 데이터셋 경로 사용 예시
+   python train_yolov11.py --config configs/train/exp12_train_yolo11s_noflip.yaml --data <path/to/dataset.yaml>
+   ```
 
 ---
 ## 💡 가중치 운영 가이드 (Weights Policy)
