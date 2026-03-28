@@ -21,10 +21,7 @@ from ultralytics import YOLO
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-DEFAULT_DATA_YAML_LEGACY = PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
-DEFAULT_DATA_YAML_CLEANED = (
-    PROJECT_ROOT / "data" / "yolo_cleaned" / "seed_777" / "dataset.yaml"
-)
+DEFAULT_DATA_YAML_PRIMARY = PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
 METRICS_DIR = PROJECT_ROOT / "metrics"
 
 # 👉 runs 경로를 절대경로로 고정 (핵심)
@@ -40,10 +37,9 @@ def get_device() -> str:
 
 
 def find_default_dataset_yaml() -> Path:
-    if DEFAULT_DATA_YAML_CLEANED.exists():
-        return DEFAULT_DATA_YAML_CLEANED
-    if DEFAULT_DATA_YAML_LEGACY.exists():
-        return DEFAULT_DATA_YAML_LEGACY
+    # Current default training dataset path in this project.
+    if DEFAULT_DATA_YAML_PRIMARY.exists():
+        return DEFAULT_DATA_YAML_PRIMARY
 
     candidates = sorted(PROJECT_ROOT.glob("data/**/dataset.yaml"))
     hint = ""
@@ -52,11 +48,10 @@ def find_default_dataset_yaml() -> Path:
 
     raise FileNotFoundError(
         "dataset.yaml not found.\n"
-        f"- looked for: {DEFAULT_DATA_YAML_CLEANED}\n"
-        f"- looked for: {DEFAULT_DATA_YAML_LEGACY}"
+        f"- looked for: {DEFAULT_DATA_YAML_PRIMARY}"
         f"{hint}\n\n"
-        "If you intended to use the existing cleaned dataset, pass:\n"
-        "  python train_yolov8.py --data data/yolo_cleaned/seed_777/dataset.yaml\n"
+        "If your dataset lives elsewhere, pass it explicitly with:\n"
+        "  python train_yolov11.py --data <path/to/dataset.yaml>\n"
     )
 
 
