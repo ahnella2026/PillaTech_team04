@@ -14,6 +14,14 @@ import cv2
 import re
 from ensemble_boxes import weighted_boxes_fusion
 import argparse
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
+from logging_utils import start_run_logging
 
 def get_image_sizes(image_dir):
     sizes = {}
@@ -67,10 +75,29 @@ def parse_args():
         default=None,
         help='Image directory used for box normalization (test or val).',
     )
+    parser.add_argument(
+        '--save-log',
+        dest='save_log',
+        action='store_true',
+        help='Save runtime log to logs/inference',
+    )
+    parser.add_argument(
+        '--no-save-log',
+        dest='save_log',
+        action='store_false',
+        help='Disable runtime log file saving',
+    )
+    parser.set_defaults(save_log=True)
     return parser.parse_args()
 
 def main():
     args = parse_args()
+    start_run_logging(
+        project_root=PROJECT_ROOT,
+        category="inference",
+        run_name=Path(args.output).stem,
+        enabled=args.save_log,
+    )
     csv_paths = args.csvs
     weights = args.weights
     if weights is None:

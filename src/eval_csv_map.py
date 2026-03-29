@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 import re
+import sys
 from pathlib import Path
 
 import cv2
@@ -22,6 +23,11 @@ from ultralytics.utils.metrics import ap_per_class, box_iou
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
+from logging_utils import start_run_logging
+
 DEFAULT_VAL_IMG_DIR = PROJECT_ROOT / "data" / "yolo_dataset" / "images" / "val"
 DEFAULT_VAL_LABEL_DIR = PROJECT_ROOT / "data" / "yolo_dataset" / "labels" / "val"
 DEFAULT_YAML_PATH = PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
@@ -47,6 +53,19 @@ def parse_args():
     parser.add_argument("--iou", type=float, default=None, help="IoU threshold used for inference/WBF")
     parser.add_argument("--scales", default=None, help="Optional comma-separated scales (e.g. 640,960,1024)")
     parser.add_argument("--save_json", default=None, help="Optional path to save summary json")
+    parser.add_argument(
+        "--save-log",
+        dest="save_log",
+        action="store_true",
+        help="Save runtime log to logs/inference",
+    )
+    parser.add_argument(
+        "--no-save-log",
+        dest="save_log",
+        action="store_false",
+        help="Disable runtime log file saving",
+    )
+    parser.set_defaults(save_log=True)
     return parser.parse_args()
 
 
@@ -262,6 +281,12 @@ def evaluate_predictions(pred_csv: str, gt_by_image: dict[str, dict], target_cla
 
 def main():
     args = parse_args()
+    start_run_logging(
+        project_root=PROJECT_ROOT,
+        category="inference",
+        run_name=f"{Path(args.pred_csv).stem}_eval",
+        enabled=args.save_log,
+    )
     inverse_class_map, _ = build_inverse_class_map(args.data, args.json_dir)
     gt_by_image, target_classes = load_ground_truth(args.image_dir, args.label_dir, inverse_class_map)
     metrics = evaluate_predictions(args.pred_csv, gt_by_image, target_classes)

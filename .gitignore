@@ -233,6 +233,8 @@ data/processed/
 data/yolo_cleaned/
 data/yolo_dataset/
 runs/
+submission/
+logs/
 
 #학습 가중치 
 weights/ 

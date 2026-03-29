@@ -41,17 +41,17 @@ ipywidgets==8.1.8
 isoduration==20.11.0
 jedi==0.19.2
 Jinja2==3.1.6
-joblib==1.5.3
+joblib @ file:///home/task_176786732698665/croot/joblib_1767868073384/work
 json5==0.13.0
 jsonpointer==3.0.0
 jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
 jupyter==1.1.1
-jupyter_client==8.8.0
 jupyter-console==6.6.3
-jupyter_core==5.9.1
 jupyter-events==0.12.0
 jupyter-lsp==2.3.0
+jupyter_client==8.8.0
+jupyter_core==5.9.1
 jupyter_server==2.17.0
 jupyter_server_terminals==0.5.4
 jupyterlab==4.5.6
@@ -65,9 +65,9 @@ MarkupSafe==3.0.2
 matplotlib==3.10.8
 matplotlib-inline==0.2.1
 mistune==3.2.0
-mkl_fft==2.1.1
-mkl_random==1.3.0
 mkl-service==2.5.2
+mkl_fft @ file:///home/task_176159252635933/conda-bld/mkl_fft_1761592902019/work
+mkl_random @ file:///home/task_176159299715632/conda-bld/mkl_random_1761593011445/work
 mpmath==1.3.0
 nbclient==0.10.4
 nbconvert==7.17.0
@@ -77,7 +77,7 @@ networkx==3.6.1
 notebook==7.5.5
 notebook_shim==0.2.4
 numba==0.64.0
-numpy==2.4.3
+numpy @ file:///home/task_177399616688916/croot/numpy_and_numpy_base_1773996196837/work/dist/numpy-2.4.3-cp312-cp312-linux_x86_64.whl#sha256=0346d2ac191dfcbb21d215038ab5444c82e7f718248fb121cf996829e6263f88
 nvidia-cublas-cu12==12.1.3.1
 nvidia-cuda-cupti-cu12==12.1.105
 nvidia-cuda-nvrtc-cu12==12.1.105
@@ -92,13 +92,12 @@ nvidia-nvjitlink-cu12==12.9.86
 nvidia-nvtx-cu12==12.1.105
 opencv-python==4.13.0.92
 opencv-python-headless==4.13.0.92
-packaging==25.0
+packaging @ file:///home/task_176104874243446/conda-bld/packaging_1761049080023/work
 pandas==3.0.1
 pandocfilters==1.5.1
 parso==0.8.6
 pexpect==4.9.0
 pillow==12.0.0
-pip==26.0.1
 platformdirs==4.9.4
 polars==1.39.2
 polars-runtime-32==1.39.2
@@ -137,7 +136,7 @@ stack-data==0.6.3
 starlette==0.52.1
 sympy==1.13.1
 terminado==0.18.1
-threadpoolctl==3.5.0
+threadpoolctl @ file:///home/task_176436168230481/conda-bld/threadpoolctl_1764361729106/work
 tinycss2==1.4.0
 torch==2.5.1+cu121
 torchaudio==2.5.1+cu121
@@ -145,8 +144,8 @@ torchvision==0.20.1+cu121
 tornado==6.5.5
 traitlets==5.14.3
 triton==3.1.0
-typing_extensions==4.15.0
 typing-inspection==0.4.2
+typing_extensions==4.15.0
 tzdata==2025.3
 ultralytics==8.4.23
 ultralytics-thop==2.0.18

@@ -19,9 +19,9 @@ graph TD
     B --> C["data/processed/<br/>(Merged JSON)"]
     C --> D[prepare_yolo_dataset.py]
     D --> E["data/yolo_dataset/<br/>(YOLO 포맷)"]
-    E --> F[train_yolov11.py]
+    E --> F[train_yolo.py]
     F --> G["runs/<br/>(학습 결과/가중치)"]
-    G --> H[src/test_custom_v12.py]
+    G --> H[src/test_custom.py]
     H --> I[submission.csv]
 ```
 
@@ -31,12 +31,12 @@ graph TD
 ### 🔗 주요 경로 (Quick Links)
 - **`configs/train/`**: 학습 설정 YAML
 - **`configs/inference/`**: 추론 설정 YAML
-- **`src/test_custom_v12.py`**: 추론 스크립트 (config/CLI 지원)
+- **`src/test_custom.py`**: 추론 스크립트 (config/CLI 지원)
 - **`runs/exp12_train_yolo11s_noflip/weights/best.pt`**: v12(Exp12) 배포 가중치 (Drive 공유 후 이 경로에 배치)
 - **`data/raw/sprint_ai_project1_data/`**: 원본 데이터 (train/test images, annotations)
 - **`data/yolo_dataset/`**: 학습에 직접 사용하는 YOLO 포맷 데이터셋
 - **`metrics/`**: validation 성능 리포트 JSON
-- **`submission/`**: 제출용 CSV 보관
+- **`submission/`**: 제출용 CSV 로컬 산출물 (Git 미추적, `.gitignore`)
 
 상세한 실험별 경로, runs 폴더 계보, 재현 커맨드는 `experiments.md`를 참고하세요.
 	
@@ -47,9 +47,9 @@ PillaTech_team04/
 ├── requirements.txt               # 의존성 고정 (팀 환경 재현용)
 ├── preprocessing.py               # 데이터 정제/병합/합성 파이프라인
 ├── prepare_yolo_dataset.py        # YOLO 포맷 데이터셋 구축 스크립트
-├── train_yolov11.py               # 학습 실행기 (YOLOv11)
+├── train_yolo.py                  # 학습 실행기
 ├── src/                           # 추론/앙상블/평가 스크립트
-│   ├── test_custom_v12.py         # 추론 엔진 (config/CLI 지원)
+│   ├── test_custom.py             # 추론 엔진 (config/CLI 지원)
 │   ├── ensemble_wbf.py            # WBF 앙상블
 │   └── exp8_search.py             # NMS 파라미터 탐색
 ├── scripts/                       # 실험 파이프라인 실행용 셸 스크립트
@@ -75,16 +75,15 @@ PillaTech_team04/
 │   │   └── weights/                        # best.pt, last.pt
 │   └── ...                                 # 기타 실험 폴더들
 ├── metrics/                       # validation 성능 리포트 JSON
-├── submission/                    # 제출용 CSV 보관
+├── submission/                    # 제출용 CSV 로컬 산출물 (Git 미추적, .gitignore)
 └── weights/                       # (선택) 베이스 모델 파일 보관 (yolo11s.pt 등)
 ```
 
 ### 핵심 파일 역할
 - **`preprocessing.py`**: Raw COCO JSON을 이미지별로 병합하고, 계층적 분할(Stratified) 및 합성 증강(Copy-Paste) 수행.
 - **`prepare_yolo_dataset.py`**: 병합된 JSON을 YOLO 학습용 디렉토리 구조 및 라벨 파일로 변환.
-- **`train_yolov11.py`**: `configs/train/` 파일을 읽어 학습을 수행하고 `metrics/`에 결과를 자동 저장.
-- **`src/test_custom_v12.py`**: CLI 인자와 `configs/inference/`를 지원하는 범용 추론 스크립트.
--
+- **`train_yolo.py`**: `configs/train/` 파일을 읽어 학습을 수행하고 `metrics/`에 결과를 자동 저장.
+- **`src/test_custom.py`**: CLI 인자와 `configs/inference/`를 지원하는 범용 추론 스크립트.
 
 > [!NOTE]
 > `configs/train/*.yaml`의 `copy_paste`는 **Ultralytics YOLO 내부 증강(augmentation)기법 옵션**입니다. Exp 5에서 사용한 "커스텀 합성 데이터로 데이터셋 자체를 증량(희귀 클래스 증강, Copy Paste)"하는 방식과는 별개이며, Exp5 방식의 (데이터셋 자체 증량)은 YOLO의 copy_paste 파라미터가 아니라, dataset.yaml이 가리키는 실제 학습 데이터 폴더에 합성 결과가 들어가 있느냐로 결정됩니다
@@ -130,13 +129,13 @@ Exp 12 실험을 재현하거나 이를 바탕으로 새 실험을 시작하려�
 
 1. **기본 데이터셋**: `data/yolo_dataset/dataset.yaml` 경로를 기본으로 사용합니다. 별도 명시가 없으면 이 경로의 데이터를 불러옵니다.
    ```bash
-   python train_yolov11.py --config configs/train/exp12_train_yolo11s_noflip.yaml
+   python train_yolo.py --config configs/train/exp12_train_yolo11s_noflip.yaml
    ```
 
 2. **커스텀 데이터셋**: 다른 경로의 데이터셋을 사용하고 싶다면 `--data` 옵션으로 명시하면 됩니다.
    ```bash
    # 다른 데이터셋 경로 사용 예시
-   python train_yolov11.py --config configs/train/exp12_train_yolo11s_noflip.yaml --data <path/to/dataset.yaml>
+   python train_yolo.py --config configs/train/exp12_train_yolo11s_noflip.yaml --data <path/to/dataset.yaml>
    ```
 
 ---
@@ -158,8 +157,8 @@ Exp 12 베이스라인과 동일한 성능을 재현하려면 추론 시 아래 
 *   **임계값**: `conf: 0.25`, `iou: 0.70`
 *   **전용 설정의 의미**: 여기서 전용 설정은 **추론용 설정 파일**(`configs/inference/...`)을 의미합니다. (`configs/train/...`은 학습용)
 *   **실행 분기**
-    *   가중치가 이미 있으면: `python src/test_custom_v12.py --config configs/inference/exp12_inference_yolo11s_noflip.yaml`
-    *   Exp 12를 처음부터 재현하면: `python train_yolov11.py --config configs/train/exp12_train_yolo11s_noflip.yaml` 실행 후 위 추론 명령 실행
+    *   가중치가 이미 있으면: `python src/test_custom.py --config configs/inference/exp12_inference_yolo11s_noflip.yaml`
+    *   Exp 12를 처음부터 재현하면: `python train_yolo.py --config configs/train/exp12_train_yolo11s_noflip.yaml` 실행 후 위 추론 명령 실행
 *   **가중치 공유 방법**: `runs/exp12_train_yolo11s_noflip/weights/best.pt`는 Google Drive에 공유되어 있습니다. 4조 팀원분들은 같은 경로에 배치해주세요. (이 경로를 `configs/inference/exp12_inference_yolo11s_noflip.yaml`의 `model`이 참조합니다. `runs/`는 용량 이슈로 보통 Git에 올리지 않습니다.)
 
 ---

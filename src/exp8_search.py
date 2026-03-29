@@ -19,6 +19,11 @@ from ultralytics import YOLO
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
+from logging_utils import start_run_logging
+
 METRICS_DIR = PROJECT_ROOT / "metrics"
 
 
@@ -44,6 +49,19 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Show Ultralytics validation progress/logs (recommended if you can't see progress).",
     )
+    p.add_argument(
+        "--save-log",
+        dest="save_log",
+        action="store_true",
+        help="Save runtime log to logs/inference",
+    )
+    p.add_argument(
+        "--no-save-log",
+        dest="save_log",
+        action="store_false",
+        help="Disable runtime log file saving",
+    )
+    p.set_defaults(save_log=True)
     return p.parse_args()
 
 
@@ -83,6 +101,12 @@ def infer_model_name(model_path: str) -> str | None:
 
 def main() -> None:
     args = parse_args()
+    start_run_logging(
+        project_root=PROJECT_ROOT,
+        category="inference",
+        run_name=f"exp8_search_{Path(args.model).stem}",
+        enabled=args.save_log,
+    )
     model_path = args.model
     data_path = args.data
 

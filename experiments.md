@@ -30,39 +30,51 @@ git restore --source=pred/yewon train_annotations
 > - **결과**: Exp 11부터는 **'Cleaned Baseline'**으로 명명하며 모든 지표의 신뢰성을 재확보함.
 
 ## 🧪 실험 목록 (Experiment Table)
-| ID | 실험명 | 변경 사항 (Strategy) | Backbone | Size | Epoch | Seed | C | I | P | R | F1 | mAP@.5 | mAP@.75 | mAP@.5:.95 | Best | 인사이트 및 결과 |
-|:---:|:---:|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---|
-| **Exp 1~10**| **Polluted-Sets** | **데이터 오염 상태에서의 실험들 (잠정 지표)** | - | - | - | - | - | - | - | - | - | - | - | - | - | 데이터 무결성 결함 잔존했을 것으로 추정됨 |
-| **캐글** | **캐글용** | Stratified Split/욜로기본증강설정 | v8n | 640 | 50 | 50 | - | - | - | - | - | 0.79 | - | - | - | Kaggle: 0.70166 |
-| **Ref 1**| **예원** | Random Split / 욜로기본증강설정 | v8n | 640 | 50 | - | - | - | **0.790** | 0.760 | - | - | - | - | - | 예원님 결과 |
-| **Exp 0** | **YOLOv8n** | Random Split / 욜로기본증강설정 | v8n | 640 | 50 | - | - | - | 0.959 | 0.935 | - | **0.950** | - | - | 50 | • 극단적 데이터 누수 발생 / 캐글 베이스라인 로컬 재현 |
-| **Exp 1-1** | **Stratified** | YOLO 기본증강 + Stratified | v8n | 640 | 20 | - | - | - | 0.402 | 0.384 | - | **0.395** | - | - | 20 | 계층적 분할 시작 |
-| **Exp 1-2**| **Stratified** | YOLO 기본증강 + Stratified | v8n | 640 | 50 | - | - | - | **0.960** | 0.943 | - | 0.945 | - | - | **36** | 누수 잔존 확인 |
-| **Exp 2** | **v11s Pivot** | YOLO 기본증강 + Stratified | **v11s** | 640 | 50 | - | - | - | **0.994** | **0.990** | - | **0.995** | - | - | **50** | 모델 교체 |
-| **Exp 3** | **Hi-Res** | YOLO 기본증강 + Stratified | **v11s** | 960 | 50 | - | - | - | **0.995** | **0.990** | - | **0.995** | - | - | **50** | 해상도 증량 |
-| **Exp 4** | **Flip-Off** | YOLO 기본증강 (Flip Off) | **v11s** | 960 | 50 | - | - | - | **0.995** | **0.992** | - | **0.995** | - | - | **50** | 각인 보호 효과 |
-| **Exp 5** | **Custom CP** | YOLO 기본증강 (Flip Off) + 커스텀 CP | **v11s** | 960 | 50 | 0 | .25 | .70 | **0.995** | **0.993** | - | **0.995** | - | - | **50** | **Kaggle 0.968** (YOLO 내장 copy_paste옵션 아님) |
-| **Exp 6** | **Rotation** | YOLO 기본 (Flip Off) + CP + Rotation | **v11s** | 960 | 50 | - | - | - | 0.990 | 0.940 | - | 0.995 | - | - | 50 | **Kaggle 0.854** |
-| **Exp 7** | **Final-Res** | YOLO 기본 (Flip Off) + CP (No Rot) | **v11s** | 1024| 50 | - | - | - | **0.995** | **0.993** | - | **0.995** | - | - | **50** | 성능 정체 |
-| **Exp 8** | **Dynamic NMS** | Exp5(best) 기준 NMS 튜닝 | v11s | 1024 | - | - | .20 | .60 | 0.9941 | 0.9926 | - | 0.9941 | - | - | - | Kaggle: **0.96670**, iou=0.60 튜닝 결과 |
-| **Exp 9** | **Multi-scale WBF** | Exp5 `best.pt` 기반 640/960/1024 추론 + WBF | v11s | Mix | - | - | .20 | .60 | 0.9932 | 0.9896 | - | 0.9932 | - | - | - | Kaggle: **0.97243** (최고점) |
-| **Exp 10-1**| **Seed 42** | Exp 5 (Seed 42) | v11s | 960 | 50 | **42** | .25 | .70 | 0.9949 | 0.9942 | - | 0.9949 | 0.9950 | 0.9942 | 50 | 개별 시드 훈련 1 |
-| **Exp 10-2**| **Seed 123** | Exp 5 (Seed 123) | v11s | 960 | 50 | **123** | .25 | .70 | 0.9950 | 0.9904 | - | 0.9950 | 0.9950 | 0.9904 | 50 | 개별 시드 훈련 2 |
-| **Exp 10-3**| **Seed 777** | Exp 5 (Seed 777) | v11s | 960 | 50 | **777** | .25 | .70 | 0.9944 | 0.9932 | - | 0.9944 | 0.9950 | 0.9932 | 50 | 개별 시드 훈련 3 |
-| **Exp 10(F)**| **3-Seed Ens**| Exp 10-1~3 WBF 앙상블 | v11s | 960 | - | - | .25 | .60 | **0.9942** | **0.9927** | - | **0.9942** | 0.9942 | **0.9927** | - | **Kaggle: 0.98073 (현재 최고점!!)** |
-| **Exp 11** | **Dirty-Aug** | Exp 5 Clean (fliplr: 0.5 오설정) | v11s | 960 | 50 | 0 | .25 | .70 | 0.9696 | 0.9696 | 0.9696 | 0.9931 | 0.9950 | 0.9899 | 50 | **[기각]** 변인 통제 실패 (Kaggle: 0.95910) |
-| **Exp 12** | **Cleaned-Base** | **Exp 5 Clean (fliplr: 0.0 복구)** | v11s | 960 | 50 | 0 | .25 | .70 | **0.9740** | **0.9649** | **0.9694** | **0.9946** | **0.9950** | **0.9933** | 50 | **[신뢰 베이스라인 세팅 완료]** (Kaggle: 0.96528) |
-| **Exp 13** | **DETR Base** | Transformer 기반 모델 | DETR | 1024 | 50 | 0 | .25 | .70 | - | - | - | - | - | - | 50 | 진행 예정 |
-| **Exp 14** | **Hetero WBF** | v11s + v26n + DETR 융합 | Mix | Mix | - | - | - | - | - | 진행 예정 |
-| **Exp 15** | **Pseudo-L** | Test 셋 Pseudo-label 재학습 | Mix | Mix | - | - | - | - | - | 진행 예정 |
-| **Exp 16** | **Colab Pro** | v11m, v12-S/M 고체급 학습 | Mix | 1024 | 50 | - | - | - | - | 진행 예정 |
+| ID | 실험명 | 변경 사항 (Strategy) | Backbone | Size | Epoch | Seed | Opt | C | I | P | R | F1 | mAP@.5 | mAP@.75 | mAP@.5:.95 | Best | 인사이트 및 결과 |
+|:---:|:---:|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---|
+| **Exp 1~10**| **Polluted-Sets** | **데이터 오염 상태에서의 실험들 (잠정 지표)** | - | - | - | 0 중심 / 42·123·777 포함 | - | - | - | - | - | - | - | - | - | - | 데이터 무결성 결함 잔존했을 것으로 추정됨 |
+| **캐글** | **캐글용** | Stratified Split/욜로기본증강설정 | v8n | 640 | 50 | 50 | - | - | - | - | - | - | 0.79 | - | - | - | Kaggle: 0.70166 |
+| **Ref 1**| **예원** | Random Split / 욜로기본증강설정 | v8n | 640 | 50 | - | - | - | - | **0.790** | 0.760 | - | - | - | - | - | 예원님 결과 |
+| **Exp 0** | **YOLOv8n** | Random Split / 욜로기본증강설정 | v8n | 640 | 50 | 0 | auto | - | - | 0.959 | 0.935 | - | **0.950** | - | - | 50 | • 극단적 데이터 누수 발생 / 캐글 베이스라인 로컬 재현 |
+| **Exp 1-1** | **Stratified** | YOLO 기본증강 + Stratified | v8n | 640 | 20 | 0(추정) | - | - | - | 0.402 | 0.384 | - | **0.395** | - | - | 20 | 계층적 분할 시작 |
+| **Exp 1-2**| **Stratified** | YOLO 기본증강 + Stratified | v8n | 640 | 50 | 0 | auto | - | - | **0.960** | 0.943 | - | 0.945 | - | - | **36** | 누수 잔존 확인 |
+| **Exp 2** | **v11s Pivot** | YOLO 기본증강 + Stratified | **v11s** | 640 | 50 | 0 | auto | - | - | **0.994** | **0.990** | - | **0.995** | - | - | **50** | 모델 교체 |
+| **Exp 3** | **Hi-Res** | YOLO 기본증강 + Stratified | **v11s** | 960 | 50 | 0 | auto | - | - | **0.995** | **0.990** | - | **0.995** | - | - | **50** | 해상도 증량 |
+| **Exp 4** | **Flip-Off** | YOLO 기본증강 (Flip Off) | **v11s** | 960 | 50 | 0 | auto | - | - | **0.995** | **0.992** | - | **0.995** | - | - | **50** | 각인 보호 효과 |
+| **Exp 5** | **Custom CP** | YOLO 기본증강 (Flip Off) + 커스텀 CP | **v11s** | 960 | 50 | 0 | auto | .25 | .70 | **0.995** | **0.993** | - | **0.995** | - | - | **50** | **Kaggle 0.968** (YOLO 내장 copy_paste옵션 아님) |
+| **Exp 6** | **Rotation** | YOLO 기본 (Flip Off) + CP + Rotation | **v11s** | 960 | 50 | 0 | auto | - | - | 0.990 | 0.940 | - | 0.995 | - | - | 50 | **Kaggle 0.854** |
+| **Exp 7** | **Final-Res** | YOLO 기본 (Flip Off) + CP (No Rot) | **v11s** | 1024| 50 | 0 | auto | - | - | **0.995** | **0.993** | - | **0.995** | - | - | **50** | 성능 정체 |
+| **Exp 8** | **Dynamic NMS** | Exp5(best) 기준 NMS 튜닝 | v11s | 1024 | - | 0(Exp5 기반) | - | .20 | .60 | 0.9941 | 0.9926 | - | 0.9941 | - | - | - | Kaggle: **0.96670**, iou=0.60 튜닝 결과 |
+| **Exp 9** | **Multi-scale WBF** | Exp5 `best.pt` 기반 640/960/1024 추론 + WBF | v11s | Mix | - | 0(Exp5 기반) | - | .20 | .60 | 0.9932 | 0.9896 | - | 0.9932 | - | - | - | Kaggle: **0.97243** (최고점) |
+| **Exp 10-1**| **Seed 42** | Exp 5 (Seed 42) | v11s | 960 | 50 | **42** | auto | .25 | .70 | 0.9949 | 0.9942 | - | 0.9949 | 0.9950 | 0.9942 | 50 | 개별 시드 훈련 1 |
+| **Exp 10-2**| **Seed 123** | Exp 5 (Seed 123) | v11s | 960 | 50 | **123** | auto | .25 | .70 | 0.9950 | 0.9904 | - | 0.9950 | 0.9950 | 0.9904 | 50 | 개별 시드 훈련 2 |
+| **Exp 10-3**| **Seed 777** | Exp 5 (Seed 777) | v11s | 960 | 50 | **777** | auto | .25 | .70 | 0.9944 | 0.9932 | - | 0.9944 | 0.9950 | 0.9932 | 50 | 개별 시드 훈련 3 |
+| **Exp 10(F)**| **3-Seed Ens**| Exp 10-1~3 WBF 앙상블 | v11s | 960 | - | 42/123/777 | - | .25 | .60 | **0.9942** | **0.9927** | - | **0.9942** | 0.9942 | **0.9927** | - | **Kaggle: 0.98073 (현재 최고점!!)** |
+| **Exp 11** | **Dirty-Aug** | Exp 5 Clean (fliplr: 0.5 오설정) | v11s | 960 | 50 | 0 | auto | .25 | .70 | 0.9696 | 0.9696 | 0.9696 | 0.9931 | 0.9950 | 0.9899 | 50 | **[기각]** 변인 통제 실패 (Kaggle: 0.95910) |
+| **Exp 12** | **Cleaned-Base** | **Exp 5 Clean (fliplr: 0.0 복구)** | v11s | 960 | 50 | 0 | auto | .25 | .70 | **0.9740** | **0.9649** | **0.9694** | **0.9946** | **0.9950** | **0.9933** | 50 | **[신뢰 베이스라인 세팅 완료]** (Kaggle: 0.96528) |
+| **Exp 13** | **Baseline-1.0 Rebuild** | 베이스라인 1.0재현 실패(fliplr: 0.0 오설정) | v8n | 640 | 50 | 42 | auto | .25 | .70 | 0.9362 | 0.9887 | 0.9617 | 0.9890 | 0.9950 | 0.9800 | 50 | `metrics/exp_baseline_yolov8n_1.0_val_metrics.json` / Kaggle: **0.94032** |
+| **Exp 14** | **Baseline-2.0 Rebuild** | 베이스라인 2.0 재현(`fliplr: 0.5` 복구) | v8n | 640 | 50 | 42 | auto(→AdamW) | .25 | .70 | 0.9485 | 0.9918 | 0.9697 | 0.9878 | 0.9950 | 0.9717 | 50 | `metrics/exp14_train_baseline_yolov8n_1.0_val_metrics.json` / Kaggle: **0.93808** |
+
+
+### Exp 예비 (시간 여유 시 진행)
+| 구분 | 내용 | 상태 |
+|:---|:---|:---|
+| Exp 예비-A | DETR Base (Transformer 기반) | 대기 |
+| Exp 예비-B | Hetero WBF (v11s + v26n + DETR) | 대기 |
+| Exp 예비-C | Pseudo-Labeling 재학습 | 대기 |
+| Exp 예비-D | Colab Pro 고체급 학습 (v11m, v12-S/M) | 대기 |
 
 
 ### 평가 기준 정리
+*   **용어 고정**:
+    *   **Local mAP** = 로컬 `validation` 셋(`data/yolo_dataset/images/val`)에서 계산한 mAP 지표
+    *   **Kaggle score** = `test_images` 제출 CSV 기준 Kaggle 리더보드 점수
+*   **기록 규칙**: 모든 실험은 `Local mAP`와 `Kaggle score`를 분리해서 기록하고, 두 수치를 직접 동일 지표로 비교하지 않음.
 *   Exp 1~9의 mAP 지표는 모두 로컬 `validation` 셋(`data/yolo_dataset/images/val`) 기준으로 산출함.
-*   캐글 제출용 CSV는 별도 추론 스크립트 `src/test_custom_v12.py`를 사용해 `test_images` 기준으로 생성함.
+*   캐글 제출용 CSV는 별도 추론 스크립트 `src/test_custom.py`를 사용해 `test_images` 기준으로 생성함.
 *   따라서 로컬 mAP와 캐글 점수는 서로 다른 데이터셋에서 측정된 값이며, 직접적으로 동일 지표가 아님.
 *   Exp 8은 `validation` 기준으로 Exp5의 `best.pt`를 사용해 NMS 탐색을 수행한 뒤, 동일 가중치로 `test_images` 제출 CSV를 생성한 실험임.
+*   Exp 0~14 학습 실험의 optimizer 기록은 대부분 `auto`로 운영됨. 다만 `auto`는 내부 선택 결과(예: SGD/AdamW)가 별도 로그로 남지 않아, 옵티마이저 관점의 정밀 통제/재현성 해석에는 한계가 있어서 로그기록이 되도록 변경함. 
 
 ### 일반 실험과 앙상블 실험의 차이
 *   일반 단일 모델 실험(Exp 1~8)은 `validation` 셋에 대해 직접 평가하여 mAP를 산출하며, 별도의 `val` 예측 CSV 저장은 필수가 아님.
@@ -80,13 +92,13 @@ Exp 7(1024px 리사이즈) 실험 이후, 훈련 비용이 큰 모델 업그레�
     *   **Cleaned Baseline (Exp 11)**: 기존 Exp 5(가장 성능이 좋았던 모델) 설정을 유지하되, 복구된 깨끗한 데이터셋(8장 결측 보정 + 1건 Invalid BBox 수정)으로 재학습하여 **데이터 정제만으로 발생하는 순수 성능 향상분**을 측정. 
     *   이를 통해 오염된 데이터가 mAP에 미치는 실질적 악영향을 수치화하고, 새로운 신뢰 베이스라인으로 확립함.
 2.  **🔥 1순위 (최신 아키텍처 확장 - 고성능 모델 도입)** 
-    *   **YOLO26-n & RT-DETR (Exp 12, 13)**: 데이터 무결성이 확보된 상태에서, 2026년형 NMS-free 모델과 Transformer 기반 모델을 동원해 mAP 1.0에 도전. 
+    *   **YOLO26-n & RT-DETR (Exp 예비-A 포함)**: 데이터 무결성이 확보된 상태에서, 2026년형 NMS-free 모델과 Transformer 기반 모델을 동원해 mAP 1.0에 도전. 
     *   **NMS 튜닝 (Exp 8, 완료)**: 기존 분기에서 최적화 지표 확보.
 3.  **🔵 3순위 (최종 병기 - 앙상블 및 고급기법)**
-    *   **Hetero WBF (Exp 14)**: 각기 다른 장점을 가진 YOLO와 RT-DETR의 예측값을 WBF로 융합하여 mAP 극대화.
-    *   **Pseudo-Labeling (Exp 15)**: 가장 강력하게 앙상블된 결과를 Test셋의 레이블로 삼아 추가 재학습 진행.
+    *   **Hetero WBF (Exp 예비-B)**: 각기 다른 장점을 가진 YOLO와 RT-DETR의 예측값을 WBF로 융합하여 mAP 극대화.
+    *   **Pseudo-Labeling (Exp 예비-C)**: 가장 강력하게 앙상블된 결과를 Test셋의 레이블로 삼아 추가 재학습 진행.
 4.  **💎 번외 (Colab Pro 유료 환경 활용 - A100 GPU 권장)**
-    *   **고체급 모델 부스팅 (Exp 16)**: 현재 로컬(RTX 3060 12GB) 환경에서는 OOM(Out of Memory)으로 학습 불가능한 `YOLO11m` 모델이나, 계산량이 많아 CPU/저가형 GPU에서 느린 **2025년 최신 `YOLOv12-S/M` (Attention 기반 고성능 모델)**을 학습시킵니다. Colab Pro의 고용량 GPU(A100/V100)를 대여하면 1024px 이상의 고해상도 환경에서 높은 Batch-size로 압도적인 성능 점프가 가능할 것으로 기대하고 있음 
+    *   **고체급 모델 부스팅 (Exp 예비-D)**: 현재 로컬(RTX 3060 12GB) 환경에서는 OOM(Out of Memory)으로 학습 불가능한 `YOLO11m` 모델이나, 계산량이 많아 CPU/저가형 GPU에서 느린 **2025년 최신 `YOLOv12-S/M` (Attention 기반 고성능 모델)**을 학습시킵니다. Colab Pro의 고용량 GPU(A100/V100)를 대여하면 1024px 이상의 고해상도 환경에서 높은 Batch-size로 압도적인 성능 점프가 가능할 것으로 기대하고 있음 
 
 
 ### [Exp 0] Baseline (YOLOv8n / 640px)
@@ -134,7 +146,7 @@ Exp 7(1024px 리사이즈) 실험 이후, 훈련 비용이 큰 모델 업그레�
 *   **분석**: 실험 5의 성공 베이스라인에 1024px 초고해상도를 투입한 결과, 로컬 mAP@50-95 **0.9934** 달성. 
 *   **통찰**: 실험 6에서 배운 "테스트 셋 정방향 정렬" 특성을 적극 활용하여 회전을 제거하고, 해상도 증량(960px -> 1024px)에 집중함. 이는 알약의 미세 각인(세부 특징 추출) 및 테두리 정밀도를 극한으로 살리기 위한 전략임. 
 *   **결정**: 해상도 단순 리사이즈는 임계점에 도달한 것으로 판단됨. YOLO11m으로 높이는 것은 보류하고, 기본기가 탄탄한 모델(Exp 5)을 기반으로 **1순위 전략(NMS 튜닝 및 Multi-scale 앙상블)** 을 하는 것이 맞다는 생각이 듬 
-*   **재현**: `python train_yolov8.py --config configs/train/exp7_train.yaml`
+*   **재현**: `python train_yolo.py --config configs/train/exp7_train.yaml`
 
 ### [Exp 8] Dynamic NMS Tuning (Validation Threshold Search)
 *   **목적**: conf, iou 값을 바꿔가며 어떤 조합이 validation 성능(mAP@50-95)이 가장 좋은지 찾는 것
@@ -150,7 +162,7 @@ Exp 7(1024px 리사이즈) 실험 이후, 훈련 비용이 큰 모델 업그레�
     | **mAP@50** | 0.9941 | **0.9941** | 0.9941 |
 
 *   **재현(임계값 탐색)**: `python -u src/exp8_search.py --device 0 --verbose --confs 0.20 --ious 0.50,0.60,0.70`
-*   **재현(추론)**: `python src/test_custom_v12.py --model runs/pill_exp5_yolo11s_copypaste/weights/best.pt --imgsz 1024 --conf 0.20 --iou 0.60 --output submission/exp8_submission_iou0.6.csv`
+*   **재현(추론)**: `python src/test_custom.py --model runs/pill_exp5_yolo11s_copypaste/weights/best.pt --imgsz 1024 --conf 0.20 --iou 0.60 --output submission/exp8_submission_iou0.6.csv`
 
 
 
@@ -166,7 +178,7 @@ Exp 7(1024px 리사이즈) 실험 이후, 훈련 비용이 큰 모델 업그레�
 ### [심층 리포트] NMS vs WBF의 IoU 파라미터 역할 차이 (Exp 8 vs Exp 9)
 Exp 8에서 로컬 검증 기준 최적 밸런스(`mAP@50-95=0.9926`)를 보인 `iou=0.60` 설정을 Exp 9의 멀티스케일 앙상블 파이프라인에 적용함. 다만 Exp 9의 Kaggle 0.97243은 `iou=0.60` 하나의 효과라기보다, **멀티스케일 추론 + 해상도별 NMS + WBF 병합이 함께 작동한 결과**로 해석하는 것이 더 정확함. 
 
-**1. 해상도별 추론 단계의 NMS (`test_custom_v12.py`)**
+**1. 해상도별 추론 단계의 NMS (`test_custom.py`)**
 *   단일 모델 NMS에서 `iou=0.60`은 기본값 `0.70`보다 박스 억제 조건이 더 공격적임. 즉, 조금만 겹쳐도 중복 박스로 판단해 제거할 가능성이 더 높음.
 *   Exp 8에서는 이 설정이 단일 모델 추론 환경에서 Kaggle 점수를 소폭 하락시킴. 따라서 단일 모델 기준으로는 `0.60`이 항상 유리하다고 볼 수는 없음.
 *   하지만 Exp 9처럼 640/960/1024 세 해상도에서 예측이 동시에 생성되는 환경에서는, 각 해상도 단계에서 중복 박스를 1차로 정리하는 역할을 했다고 볼 수 있음. 
@@ -203,17 +215,34 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   **통찰**: 수평 뒤집기가 활성화되면서 알약 내 텍스트 정보(각인) 특징이 오염되어, 데이터 정제 효과가 가려짐.
 *   **조치**: No-Flip(`fliplr: 0.0`) 환경을 완벽히 복원한 **Exp 12**를 통해 데이터 정제 ROI를 재측정함. 
 *   **교훈**: A/B 테스트 시 오직 단 하나의 변수(데이터)만 변경해야 하며, 다른 모델 하이퍼파라미터는 100% 일치시켜야 함.
-*   **재현**: `python train_yolov11.py --config configs/train/exp11_train_yolo11s_flip.yaml`
+*   **재현**: `python train_yolo.py --config configs/train/exp11_train_yolo11s_flip.yaml`
 
 ### [Exp 12] Cleaned Baseline (The True Outcome)
 *   **현상**: Exp 11의 변인 통제 오류(fliplr: 0.5)를 바로잡고, No-Flip(`0.0`) 환경에서 재학습 완료.
 *   **결과**: **mAP@50 0.9946** (+0.0015), **mAP@50-95 0.9933** (+0.0034) 달성 (Exp 11 대비).
 *   **통찰**: 
     1.  **BBox 정밀도 대폭 향상**: mAP@50-95 지표가 0.99대로 진입하며 우리가 정제한 '깨끗한 좌표'가 물리적 정밀도를 극대화했음을 증명함.
-    2.  **노이즈 제거의 승리**: 뒤집힌 텍스트 특징을 배제함으로써 Precision(`0.9740`)이 개선됨.
+    2.  **노이즈 제거**: 뒤집힌 텍스트 특징을 배제함으로써 Precision(`0.9740`)이 개선됨.
 *   **조치**: `runs/exp12_train_yolo11s_noflip/weights/best.pt`를 최종 Cleaned Baseline으로 확정.
-*   **추론**: `python src/test_custom_v12.py --config configs/inference/exp12_inference_yolo11s_noflip.yaml`
-*   **재현**: `python train_yolov11.py --config configs/train/exp12_train_yolo11s_noflip.yaml`
+*   **추론**: `python src/test_custom.py --config configs/inference/exp12_inference_yolo11s_noflip.yaml`
+*   **재현**: `python train_yolo.py --config configs/train/exp12_train_yolo11s_noflip.yaml`
+
+### [Exp 13] Baseline-1.0 Rebuild (YOLOv8n, Partial-Default Aug)
+*   **현상**: YOLOv8n + 640 + 50epoch + seed42 + YOLO 기본증강 일부 배제(플립 OFF) 조건으로 Baseline 1.0을 재현했을 때, Kaggle Public Score **0.94032**를 기록함.
+*   **결과**: 로컬 `validation` 기준 `mAP50=0.9890`, `mAP75=0.9950`, `mAP@50-95=0.9800`.
+*   **해석**: 초기 Baseline 점수(0.70166) 대비 큰 상승은 yolo 기본 증강인 flip을 꺼서 그런 거 같아서 exp14에서는 default값인 0.5로 켜서 실험하기로 결정함 
+*   **근거 파일**: `metrics/exp_baseline_yolov8n_1.0_val_metrics.json`, `submission/exp13_baseline_yolov8n_1.0.csv`
+
+### [Exp 14] Baseline-1.0 Rebuild (YOLOv8n, Flip Restore)
+*   **현상**: YOLOv8n + 640 + 50epoch + seed42 조건에서 `fliplr: 0.5`를 복구해 Baseline 2.0 재현 실험 수행.
+*   **결과**: 로컬 `validation` 기준 `Precision=0.9485`, `Recall=0.9918`, `F1=0.9697`, `mAP50=0.9878`, `mAP75=0.9950`, `mAP@50-95=0.9717`.
+*   **옵티마이저 기록**: `optimizer_requested=auto`, `optimizer_resolved=AdamW` 확인.
+*   **해석**: Exp13 대비 Recall은 상승했지만 `mAP@50-95`가 하락해, flip 복구가 정밀 localization에는 불리하게 작용했을 가능성이 있음.
+*   **Kaggle 결과**: Public Score **0.93808**
+*   **근거 파일**: `metrics/exp14_train_baseline_yolov8n_1.0_val_metrics.json`, `submission/exp14_baseline_yolov8n_1.0.csv`
+*   **후속 액션**: 초기 0.7점대 제출을 기록한 팀원에게 당시 학습/추론 설정 YAML 원본 공유 요청 필요하나 당시 상황에서는 이런 부분을 생각하지 못하고 기록을 안했기 때문에, 모든 팀원이 동일한 환경으로 베이스라인 1.0 재현 불가
+
+
 
 
 
@@ -229,15 +258,15 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   실험 기록 (`experiments.md`에 실행 커맨드 + 환경 + 핵심 결과)
 
 **2. [추론-only 실험]은 체크포인트를 만들지 않는다**
-*   **적용**: Exp 9 (Multi-scale WBF), Exp 13 (Hetero WBF)
+*   **적용**: Exp 9 (Multi-scale WBF), Exp 예비-B (Hetero WBF)
 *   **저장물**: `configs/inference/expN_inference.yaml` 설정 파일, 제출망 `submission.csv`, 모듈별 독립 분석 예측 로그(필요시)
 
 **3. 라이트급 모델(yolo11s, v26n 등)은 무조건 `save_period=1` 강제**
-*   **적용**: Exp 10 (3-Seed), Exp 11 (v26n), Exp 12 (RT-DETR), Exp 14 (Pseudo-Labeling)
+*   **적용**: Exp 10 (3-Seed), Exp 예비-A (RT-DETR), Exp 예비-C (Pseudo-Labeling)
 *   **이유**: 가중치 하나당 최고 19MB 수준으로 로컬(RTX 3060) 환경에서 50개(1GB)를 모두 저장해도 I/O 병목 및 용량 압박이 전무함. 차후 **최근 3개 에폭**을 이용한 Snapshot 앙상블을 100% 보장하기 위함.
 
 **4. 고체급 파운데이션 모델(yolo11m, v12-S 이상)은 Queue(최근 3개) 콜백 적용**
-*   **적용**: Exp 15 (Colab 고체급 모델 학습 등)
+*   **적용**: Exp 예비-D (Colab 고체급 모델 학습 등)
 *   **원칙**: 초거대 모델은 1에폭만 저장해도 수 기가의 비용이 발생하므로 절대 `save_period=1`을 남발하지 않음. Custom Callback 코드를 개조하여 훈련 중 **[저장 시 가장 오래된 과거 가중치 1개 실시간 폐기(os.remove)]** 하는 링 버퍼 형식으로 용량 상한 고정.
 
 **5. 수동 가비지 컬렉션 (G.C.)**
@@ -259,12 +288,12 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 1.  **`preprocessing.py`** 설정 
     * `USE_STRATIFIED`: 계층적 분할 여부 세팅
     * `USE_COPY_PASTE`: Copy-Paste 증강 여부 세팅
-2.  **`train_yolov11.py`** 실행 (학습)
-    * `python train_yolov11.py --config configs/train/exp11_train_yolo11s_flip.yaml`
+2.  **`train_yolo.py`** 실행 (학습)
+    * `python train_yolo.py --config configs/train/exp11_train_yolo11s_flip.yaml`
 3.  **`exp8_search.py`** 실행 (NMS 최적화)
     * `python -u src/exp8_search.py --device 0 --verbose --confs 0.20 --ious 0.50,0.60,0.70`
-4.  **`test_custom_v12.py`** 실행 (추론 + Config 자동 반영)
-    * `python src/test_custom_v12.py --config configs/inference/exp8_inference.yaml`
+4.  **`test_custom.py`** 실행 (추론 + Config 자동 반영)
+    * `python src/test_custom.py --config configs/inference/exp8_inference.yaml`
 ---
 
 ## 📂 부록: 폴더 구조 (Directory Layout)
@@ -277,9 +306,9 @@ PillaTech_team04/
 ├── requirements.txt               # 의존성 고정 (팀 환경 재현용)
 ├── preprocessing.py               # 데이터 정제/병합/합성 파이프라인
 ├── prepare_yolo_dataset.py        # YOLO 포맷 데이터셋 구축 스크립트
-├── train_yolov11.py               # 학습 실행기 (YOLOv11)
+├── train_yolo.py                  # 학습 실행기
 ├── src/                           # 추론/앙상블/평가 스크립트
-│   ├── test_custom_v12.py         # 추론 엔진 (config/CLI 지원)
+│   ├── test_custom.py             # 추론 엔진 (config/CLI 지원)
 │   ├── ensemble_wbf.py            # WBF 앙상블
 │   ├── exp8_search.py             # NMS 파라미터 탐색
 │   └── data/                      # (내부 유틸/임시 코드)
@@ -307,6 +336,6 @@ PillaTech_team04/
 │   ├── ...
 │   └── detect/                    # Ultralytics val 결과물
 ├── metrics/                       # validation 성능 리포트 JSON
-├── submission/                    # 제출용 CSV 보관
+├── submission/                    # 제출용 CSV 로컬 산출물 (Git 미추적, .gitignore)
 └── weights/                       # (선택) 베이스 모델 파일 보관 (yolo11s.pt 등)
 ```

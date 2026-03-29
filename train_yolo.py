@@ -19,12 +19,11 @@ import torch
 import yaml
 from ultralytics import YOLO
 
+from logging_utils import start_run_logging
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-DEFAULT_DATA_YAML_LEGACY = PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
-DEFAULT_DATA_YAML_CLEANED = (
-    PROJECT_ROOT / "data" / "yolo_cleaned" / "seed_777" / "dataset.yaml"
-)
+DEFAULT_DATA_YAML_PRIMARY = PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
 METRICS_DIR = PROJECT_ROOT / "metrics"
 
 # 👉 runs 경로를 절대경로로 고정 (핵심)
@@ -40,10 +39,9 @@ def get_device() -> str:
 
 
 def find_default_dataset_yaml() -> Path:
-    if DEFAULT_DATA_YAML_CLEANED.exists():
-        return DEFAULT_DATA_YAML_CLEANED
-    if DEFAULT_DATA_YAML_LEGACY.exists():
-        return DEFAULT_DATA_YAML_LEGACY
+    # Current default training dataset path in this project.
+    if DEFAULT_DATA_YAML_PRIMARY.exists():
+        return DEFAULT_DATA_YAML_PRIMARY
 
     candidates = sorted(PROJECT_ROOT.glob("data/**/dataset.yaml"))
     hint = ""
@@ -52,11 +50,10 @@ def find_default_dataset_yaml() -> Path:
 
     raise FileNotFoundError(
         "dataset.yaml not found.\n"
-        f"- looked for: {DEFAULT_DATA_YAML_CLEANED}\n"
-        f"- looked for: {DEFAULT_DATA_YAML_LEGACY}"
+        f"- looked for: {DEFAULT_DATA_YAML_PRIMARY}"
         f"{hint}\n\n"
-        "If you intended to use the existing cleaned dataset, pass:\n"
-        "  python train_yolov8.py --data data/yolo_cleaned/seed_777/dataset.yaml\n"
+        "If your dataset lives elsewhere, pass it explicitly with:\n"
+        "  python train_yolov11.py --data <path/to/dataset.yaml>\n"
     )
 
 
@@ -78,6 +75,18 @@ def load_config(config_path: Path) -> dict:
         raise TypeError(f"Config must be a mapping/dict, got: {type(data).__name__}")
 
     return data
+
+
+def parse_bool(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+
+    text = str(value).strip().lower()
+    if text in {"1", "true", "t", "yes", "y", "on"}:
+        return True
+    if text in {"0", "false", "f", "no", "n", "off"}:
+        return False
+    raise argparse.ArgumentTypeError(f"invalid boolean value: {value}")
 
 
 def build_parser(defaults: dict) -> argparse.ArgumentParser:
@@ -114,6 +123,129 @@ def build_parser(defaults: dict) -> argparse.ArgumentParser:
         type=str,
         default=defaults.get("device", "0"),
         help="cuda device, i.e. 0 or 0,1,2,3 or cpu",
+    )
+    default_save_log = bool(defaults.get("save_log", True))
+    parser.add_argument(
+        "--save-log",
+        dest="save_log",
+        action="store_true",
+        help="save runtime console log to logs/train",
+    )
+    parser.add_argument(
+        "--no-save-log",
+        dest="save_log",
+        action="store_false",
+        help="disable runtime console log file saving",
+    )
+    parser.set_defaults(save_log=default_save_log)
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=int(defaults.get("workers", 8)),
+        help="number of dataloader workers",
+    )
+    parser.add_argument(
+        "--patience",
+        type=int,
+        default=int(defaults.get("patience", 100)),
+        help="early stopping patience",
+    )
+    parser.add_argument(
+        "--amp",
+        type=parse_bool,
+        default=bool(defaults.get("amp", True)),
+        help="use mixed precision (AMP)",
+    )
+    parser.add_argument(
+        "--close_mosaic",
+        type=int,
+        default=int(defaults.get("close_mosaic", 10)),
+        help="disable mosaic augmentation in final epochs",
+    )
+    parser.add_argument(
+        "--optimizer",
+        type=str,
+        default=str(defaults.get("optimizer", "auto")),
+        help="optimizer (e.g., auto, SGD, AdamW)",
+    )
+    parser.add_argument("--lr0", type=float, default=float(defaults.get("lr0", 0.01)), help="initial learning rate")
+    parser.add_argument("--lrf", type=float, default=float(defaults.get("lrf", 0.01)), help="final LR factor")
+    parser.add_argument(
+        "--momentum",
+        type=float,
+        default=float(defaults.get("momentum", 0.937)),
+        help="SGD momentum / Adam beta1",
+    )
+    parser.add_argument(
+        "--weight_decay",
+        type=float,
+        default=float(defaults.get("weight_decay", 0.0005)),
+        help="optimizer weight decay",
+    )
+    parser.add_argument(
+        "--warmup_epochs",
+        type=float,
+        default=float(defaults.get("warmup_epochs", 3.0)),
+        help="warmup epochs",
+    )
+    parser.add_argument(
+        "--warmup_momentum",
+        type=float,
+        default=float(defaults.get("warmup_momentum", 0.8)),
+        help="warmup momentum",
+    )
+    parser.add_argument(
+        "--warmup_bias_lr",
+        type=float,
+        default=float(defaults.get("warmup_bias_lr", 0.1)),
+        help="warmup bias learning rate",
+    )
+    parser.add_argument(
+        "--cos_lr",
+        type=parse_bool,
+        default=bool(defaults.get("cos_lr", True)),
+        help="use cosine LR scheduler",
+    )
+    parser.add_argument(
+        "--pretrained",
+        type=parse_bool,
+        default=bool(defaults.get("pretrained", True)),
+        help="use pretrained weights",
+    )
+    parser.add_argument(
+        "--resume",
+        type=parse_bool,
+        default=bool(defaults.get("resume", False)),
+        help="resume previous training run",
+    )
+    parser.add_argument("--hsv_h", type=float, default=float(defaults.get("hsv_h", 0.015)), help="hsv_h augmentation")
+    parser.add_argument("--hsv_s", type=float, default=float(defaults.get("hsv_s", 0.7)), help="hsv_s augmentation")
+    parser.add_argument("--hsv_v", type=float, default=float(defaults.get("hsv_v", 0.4)), help="hsv_v augmentation")
+    parser.add_argument(
+        "--translate",
+        type=float,
+        default=float(defaults.get("translate", 0.1)),
+        help="image translation augmentation",
+    )
+    parser.add_argument("--scale", type=float, default=float(defaults.get("scale", 0.5)), help="image scale augmentation")
+    parser.add_argument("--shear", type=float, default=float(defaults.get("shear", 0.0)), help="image shear augmentation")
+    parser.add_argument(
+        "--perspective",
+        type=float,
+        default=float(defaults.get("perspective", 0.0)),
+        help="perspective augmentation",
+    )
+    parser.add_argument(
+        "--erasing",
+        type=float,
+        default=float(defaults.get("erasing", 0.4)),
+        help="random erasing augmentation",
+    )
+    parser.add_argument(
+        "--auto_augment",
+        type=str,
+        default=str(defaults.get("auto_augment", "randaugment")),
+        help="auto augmentation strategy",
     )
     # --- 증강(Augmentation) 제어용 인자 --- #
     parser.add_argument(
@@ -188,6 +320,31 @@ def parse_args() -> argparse.Namespace:
             "batch",
             "name",
             "device",
+            "save_log",
+            "workers",
+            "patience",
+            "amp",
+            "close_mosaic",
+            "optimizer",
+            "lr0",
+            "lrf",
+            "momentum",
+            "weight_decay",
+            "warmup_epochs",
+            "warmup_momentum",
+            "warmup_bias_lr",
+            "cos_lr",
+            "pretrained",
+            "resume",
+            "hsv_h",
+            "hsv_s",
+            "hsv_v",
+            "translate",
+            "scale",
+            "shear",
+            "perspective",
+            "erasing",
+            "auto_augment",
             "fliplr",
             "flipud",
             "degrees",
@@ -222,6 +379,12 @@ def infer_model_name(model_path: str) -> str:
 
 def main() -> None:
     args = parse_args()
+    log_session = start_run_logging(
+        project_root=PROJECT_ROOT,
+        category="train",
+        run_name=args.name,
+        enabled=args.save_log,
+    )
     device = args.device or get_device()
     print(f"Using device: {device}")
 
@@ -245,6 +408,9 @@ def main() -> None:
         imgsz=args.imgsz,
         batch=args.batch,
         device=device,
+        workers=args.workers,
+        patience=args.patience,
+        amp=args.amp,
 
         # ⭐ 핵심: 절대경로 사용
         project=str(RUNS_DIR),
@@ -252,8 +418,13 @@ def main() -> None:
         # 실험 이름
         name=args.name,
 
-        pretrained=True,
+        save=True,
+        plots=True,
+        pretrained=args.pretrained,
+        resume=args.resume,
         verbose=True,
+        optimizer=args.optimizer,
+        close_mosaic=args.close_mosaic,
 
 
         # # === 실험 1: Baseline 증강 유지 ===
@@ -263,6 +434,15 @@ def main() -> None:
         # mosaic=1.0,
 
         # === 증강 설정 (명령어 인자 기반 제어) ===
+        hsv_h=args.hsv_h,
+        hsv_s=args.hsv_s,
+        hsv_v=args.hsv_v,
+        translate=args.translate,
+        scale=args.scale,
+        shear=args.shear,
+        perspective=args.perspective,
+        erasing=args.erasing,
+        auto_augment=args.auto_augment,
         fliplr=args.fliplr,
         flipud=args.flipud,
         degrees=args.degrees,
@@ -271,13 +451,32 @@ def main() -> None:
         mixup=args.mixup,
         
         # === 최적화 설정 (기본값 위주) ===
-        lr0=0.01,
-        lrf=0.01,
-        warmup_epochs=3.0,
-        cos_lr=True,
+        lr0=args.lr0,
+        lrf=args.lrf,
+        momentum=args.momentum,
+        weight_decay=args.weight_decay,
+        warmup_epochs=args.warmup_epochs,
+        warmup_momentum=args.warmup_momentum,
+        warmup_bias_lr=args.warmup_bias_lr,
+        cos_lr=args.cos_lr,
         seed=args.seed,
         deterministic=args.deterministic,
     )
+
+    # Capture the actual optimizer selected by Ultralytics, especially when optimizer='auto'.
+    resolved_optimizer = "unknown"
+    resolved_lr = None
+    resolved_weight_decay = None
+    trainer = getattr(model, "trainer", None)
+    if trainer is not None:
+        opt = getattr(trainer, "optimizer", None)
+        if opt is not None:
+            resolved_optimizer = opt.__class__.__name__
+            param_groups = getattr(opt, "param_groups", None)
+            if param_groups:
+                first_group = param_groups[0]
+                resolved_lr = first_group.get("lr")
+                resolved_weight_decay = first_group.get("weight_decay")
 
     print("Training finished. Evaluating best model metrics...")
     
@@ -307,6 +506,10 @@ def main() -> None:
     metrics_payload = {
         "experiment": args.name,
         "timestamp": datetime.datetime.now().isoformat(),
+        "optimizer_requested": str(args.optimizer),
+        "optimizer_resolved": resolved_optimizer,
+        "optimizer_lr": float(resolved_lr) if resolved_lr is not None else None,
+        "optimizer_weight_decay": float(resolved_weight_decay) if resolved_weight_decay is not None else None,
         "seed": args.seed,
         "deterministic": args.deterministic,
         "dataset_split": "val",
@@ -332,6 +535,8 @@ def main() -> None:
     print("\n" + "=" * 60)
     print(f"      EXPERIMENT REPORT: {args.name}")
     print("=" * 60)
+    print(f" ➡️  Optimizer(req): {args.optimizer}")
+    print(f" ➡️  Optimizer(use): {resolved_optimizer}")
     print(f" ➡️  Precision: {precision:.4f}")
     print(f" ➡️  Recall:    {recall:.4f}")
     print(f" ➡️  F1-Score:  {f1_score:.4f}")

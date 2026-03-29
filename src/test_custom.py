@@ -14,12 +14,18 @@ import re
 import yaml
 import json
 import difflib 
+import sys
 from ultralytics import YOLO
 from pathlib import Path
 
 # --- DEFAULT PATHS --- #
 # 현재 파일 위치(/src/test_custom_v12.py) 기준으로 프로젝트 루트 설정
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
+from logging_utils import start_run_logging
+
 DEFAULT_TEST_IMG_DIR = PROJECT_ROOT / "data" / "raw" / "sprint_ai_project1_data" / "test_images"
 DEFAULT_YAML_PATH = PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
 DEFAULT_JSON_DIR = PROJECT_ROOT / "data" / "raw" / "sprint_ai_project1_data" / "train_annotations"
@@ -37,8 +43,12 @@ def parse_args():
     # 모델 및 성능 관련
     parser.add_argument("--model", type=str, default=None, help="학습된 YOLO 모델 가중치 파일(*.pt) 경로 (필수)")
     parser.add_argument("--imgsz", type=int, default=1024, help="추론 시 사용할 이미지 해상도 (기본값: 1024)")
-    parser.add_argument("--conf", type=float, default=0.25, help="검출 신뢰도 임계값 (기본값: 0.25)")
-    parser.add_argument("--iou", type=float, default=0.60, help="NMS 수행 시 사용할 IoU 임계값 (기본값 0.60, 0.70보다 보수적인 설정)")
+    
+    # NOTE:
+    # 기본값은 Ultralytics YOLO 기본 추론값(conf=0.25, iou=0.70)을 따른다.
+    # 실험별 값 변경은 코드 수정이 아니라 configs/inference/*.yaml에서 조절한다.
+    parser.add_argument("--conf", type=float, default=0.25, help="검출 신뢰도 임계값 (YOLO 기본값: 0.25)")
+    parser.add_argument("--iou", type=float, default=0.70, help="NMS 수행 시 사용할 IoU 임계값 (YOLO 기본값: 0.70)")
     
     # 입출력 경로 관련
     parser.add_argument("--output", type=str, default="submission.csv", help="결과를 저장할 CSV 파일명")
@@ -59,7 +69,10 @@ def parse_args():
         action="store_false",
         help="설정 파일 자동 저장을 비활성화",
     )
-    parser.set_defaults(save_config=True)
+    
+    
+    # 추론 로그는 기본 비활성화 (필요할 때만 코드에서 True로 전환)
+    parser.set_defaults(save_config=True, save_log=False)
     return parser.parse_args()
 
 def get_next_exp_id(config_dir):
@@ -119,6 +132,14 @@ def run_test_and_save_csv():
         # For simplicity, we prioritize the config file if --config is passed
         for key, value in config_data.items():
             setattr(cli_args, key, value)
+
+    run_name = Path(cli_args.output).stem if getattr(cli_args, "output", None) else "inference"
+    start_run_logging(
+        project_root=PROJECT_ROOT,
+        category="inference",
+        run_name=run_name,
+        enabled=getattr(cli_args, "save_log", True),
+    )
     
     if cli_args.model is None:
         print("Error: --model is required (either via CLI or --config file)")
