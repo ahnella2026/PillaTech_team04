@@ -100,14 +100,17 @@ PillaTech_team04/
 > Exp 5에서 사용한 **커스텀 합성(데이터셋 자체 증량)** 방식과는 별개입니다.  
 > 즉, Exp5 방식 적용 여부는 `copy_paste` 값이 아니라, `dataset.yaml`이 참조하는 학습 데이터 폴더에 합성 이미지/라벨이 실제로 포함되어 있는지로 판단합니다.
 
-> `src/test_legacy.py`: (구 `test.py`) 실수 방지 목적으로 예원님 원본 버전 삭제함 
-
 ---
 
 ## 🚀 퀵스타트: 환경 구축 및 실행
 아래 모든 명령은 프로젝트 **루트 폴더인 `PillaTech_team04/`** 에서 실행하세요.
 
 ### 1단계: 가상환경 설정
+
+#### OS별 실행 기준 (Windows / WSL / Mac)
+- 리드미 설명 기준은 Linux 계열 실행환경입니다. (WSL2는 Linux로 간주합니다.)
+- Windows 네이티브(PowerShell/CMD) 실행은 경로/패키지 차이로 재현성 이슈가 커집니다.
+
 ```bash
 conda create -n codeit python=3.12 -y
 conda activate codeit
@@ -116,10 +119,6 @@ pip install -r requirements.txt
 
 > [!NOTE]
 > `requirements.txt`는 `codeit` 가상환경에서 검증된 모든 패키지 버전을 포함하고 있습니다. 환경 차이로 인한 오류를 방지하기 위해 반드시 위 명령어로 설치를 권장합니다.
-
-### 1-1단계: OS별 실행 기준 (Windows / WSL / Mac)
-- 리드미 설명 기준은 Linux 계열 실행환경입니다. (WSL2는 Linux로 간주합니다.)
-- Windows 네이티브(PowerShell/CMD) 실행은 경로/패키지 차이로 재현성 이슈가 커집니다.
 
 ### 2단계: 데이터 준비 (공통)
 원본 이미지 데이터를 아래 구조(Folder Structure)에 맞춰 `data/raw/` 폴더에 배치합니다. 
