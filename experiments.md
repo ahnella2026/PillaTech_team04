@@ -30,31 +30,36 @@ git restore --source=pred/yewon train_annotations
 > - **결과**: Exp 11부터는 **'Cleaned Baseline'**으로 명명하며 모든 지표의 신뢰성을 재확보함.
 
 ## 🧪 실험 목록 (Experiment Table)
-| ID | 실험명 | 변경 사항 (Strategy) | Backbone | Size | Epoch | Seed | Opt | C | I | P | R | F1 | mAP@.5 | mAP@.75 | mAP@.5:.95 | Best | 인사이트 및 결과 |
-|:---:|:---:|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---|
-| **Exp 1~10**| **Polluted-Sets** | **데이터 오염 상태에서의 실험들 (잠정 지표)** | - | - | - | 0 중심 / 42·123·777 포함 | - | - | - | - | - | - | - | - | - | - | 데이터 무결성 결함 잔존했을 것으로 추정됨 |
-| **캐글** | **캐글용** | Stratified Split/욜로기본증강설정 | v8n | 640 | 50 | 50 | - | - | - | - | - | - | 0.79 | - | - | - | Kaggle: 0.70166 |
-| **Ref 1**| **예원** | Random Split / 욜로기본증강설정 | v8n | 640 | 50 | - | - | - | - | **0.790** | 0.760 | - | - | - | - | - | 예원님 결과 |
-| **Exp 0** | **YOLOv8n** | Random Split / 욜로기본증강설정 | v8n | 640 | 50 | 0 | auto | - | - | 0.959 | 0.935 | - | **0.950** | - | - | 50 | • 극단적 데이터 누수 발생 / 캐글 베이스라인 로컬 재현 |
-| **Exp 1-1** | **Stratified** | YOLO 기본증강 + Stratified | v8n | 640 | 20 | 0(추정) | - | - | - | 0.402 | 0.384 | - | **0.395** | - | - | 20 | 계층적 분할 시작 |
-| **Exp 1-2**| **Stratified** | YOLO 기본증강 + Stratified | v8n | 640 | 50 | 0 | auto | - | - | **0.960** | 0.943 | - | 0.945 | - | - | **36** | 누수 잔존 확인 |
-| **Exp 2** | **v11s Pivot** | YOLO 기본증강 + Stratified | **v11s** | 640 | 50 | 0 | auto | - | - | **0.994** | **0.990** | - | **0.995** | - | - | **50** | 모델 교체 |
-| **Exp 3** | **Hi-Res** | YOLO 기본증강 + Stratified | **v11s** | 960 | 50 | 0 | auto | - | - | **0.995** | **0.990** | - | **0.995** | - | - | **50** | 해상도 증량 |
-| **Exp 4** | **Flip-Off** | YOLO 기본증강 (Flip Off) | **v11s** | 960 | 50 | 0 | auto | - | - | **0.995** | **0.992** | - | **0.995** | - | - | **50** | 각인 보호 효과 |
-| **Exp 5** | **Custom CP** | YOLO 기본증강 (Flip Off) + 커스텀 CP | **v11s** | 960 | 50 | 0 | auto | .25 | .70 | **0.995** | **0.993** | - | **0.995** | - | - | **50** | **Kaggle 0.968** (YOLO 내장 copy_paste옵션 아님) |
-| **Exp 6** | **Rotation** | YOLO 기본 (Flip Off) + CP + Rotation | **v11s** | 960 | 50 | 0 | auto | - | - | 0.990 | 0.940 | - | 0.995 | - | - | 50 | **Kaggle 0.854** |
-| **Exp 7** | **Final-Res** | YOLO 기본 (Flip Off) + CP (No Rot) | **v11s** | 1024| 50 | 0 | auto | - | - | **0.995** | **0.993** | - | **0.995** | - | - | **50** | 성능 정체 |
-| **Exp 8** | **Dynamic NMS** | Exp5(best) 기준 NMS 튜닝 | v11s | 1024 | - | 0(Exp5 기반) | - | .20 | .60 | 0.9941 | 0.9926 | - | 0.9941 | - | - | - | Kaggle: **0.96670**, iou=0.60 튜닝 결과 |
-| **Exp 9** | **Multi-scale WBF** | Exp5 `best.pt` 기반 640/960/1024 추론 + WBF | v11s | Mix | - | 0(Exp5 기반) | - | .20 | .60 | 0.9932 | 0.9896 | - | 0.9932 | - | - | - | Kaggle: **0.97243** (최고점) |
-| **Exp 10-1**| **Seed 42** | Exp 5 (Seed 42) | v11s | 960 | 50 | **42** | auto | .25 | .70 | 0.9949 | 0.9942 | - | 0.9949 | 0.9950 | 0.9942 | 50 | 개별 시드 훈련 1 |
-| **Exp 10-2**| **Seed 123** | Exp 5 (Seed 123) | v11s | 960 | 50 | **123** | auto | .25 | .70 | 0.9950 | 0.9904 | - | 0.9950 | 0.9950 | 0.9904 | 50 | 개별 시드 훈련 2 |
-| **Exp 10-3**| **Seed 777** | Exp 5 (Seed 777) | v11s | 960 | 50 | **777** | auto | .25 | .70 | 0.9944 | 0.9932 | - | 0.9944 | 0.9950 | 0.9932 | 50 | 개별 시드 훈련 3 |
-| **Exp 10(F)**| **3-Seed Ens**| Exp 10-1~3 WBF 앙상블 | v11s | 960 | - | 42/123/777 | - | .25 | .60 | **0.9942** | **0.9927** | - | **0.9942** | 0.9942 | **0.9927** | - | **Kaggle: 0.98073 (현재 최고점!!)** |
-| **Exp 11** | **Dirty-Aug** | Exp 5 Clean (fliplr: 0.5 오설정) | v11s | 960 | 50 | 0 | auto | .25 | .70 | 0.9696 | 0.9696 | 0.9696 | 0.9931 | 0.9950 | 0.9899 | 50 | **[기각]** 변인 통제 실패 (Kaggle: 0.95910) |
-| **Exp 12** | **Cleaned-Base** | **Exp 5 Clean (fliplr: 0.0 복구)** | v11s | 960 | 50 | 0 | auto | .25 | .70 | **0.9740** | **0.9649** | **0.9694** | **0.9946** | **0.9950** | **0.9933** | 50 | **[신뢰 베이스라인 세팅 완료]** (Kaggle: 0.96528) |
-| **Exp 13** | **Baseline-1.0 Rebuild** | 베이스라인 1.0재현 실패(fliplr: 0.0 오설정) | v8n | 640 | 50 | 42 | auto | .25 | .70 | 0.9362 | 0.9887 | 0.9617 | 0.9890 | 0.9950 | 0.9800 | 50 | `metrics/exp_baseline_yolov8n_1.0_val_metrics.json` / Kaggle: **0.94032** |
-| **Exp 14** | **Baseline-1.0 Rebuild** | 베이스라인 2.0 재현(`fliplr: 0.5` 복구) | v8n | 640 | 50 | 42 | auto(→AdamW) | .25 | .70 | 0.9485 | 0.9918 | 0.9697 | 0.9878 | 0.9950 | 0.9717 | 50 | `metrics/exp14_train_baseline_yolov8n_1.0_val_metrics.json` / Kaggle: **0.93808** |
-| **Exp 15** | **Baseline-2.0 Canonical** | Exp12 applied 값(AdamW) 고정 + seed42 기준 배포용 베이스라인 정리 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9704 | 0.9761 | 0.9733 | 0.9918 | 0.9950 | 0.9897 | 50 | `metrics/exp15_train_baseline_yolo11s_2.0_val_metrics.json` / `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml` / Kaggle: **0.96455** |
+| ID | 실험명 | 변경 사항 (Strategy) | Backbone | Size | Epoch | Seed | Opt | C | I | P | R | F1 | mAP@.5 | mAP@.75 | mAP@.5:.95 | Best | Train(min) | Eff(K/min) | 인사이트 및 결과 |
+|:---:|:---:|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---|
+| **Exp 1~10**| **Polluted-Sets** | **데이터 오염 상태에서의 실험들 (잠정 지표)** | - | - | - | 0 중심 / 42·123·777 포함 | - | - | - | - | - | - | - | - | - | - | - | - | 데이터 무결성 결함 잔존했을 것으로 추정됨 |
+| **캐글** | **캐글용** | Stratified Split/욜로기본증강설정 | v8n | 640 | 50 | 50 | - | - | - | - | - | - | 0.79 | - | - | - | - | - | Kaggle: 0.70166 |
+| **Ref 1**| **예원** | Random Split / 욜로기본증강설정 | v8n | 640 | 50 | - | - | - | - | **0.790** | 0.760 | - | - | - | - | - | - | - | 예원님 결과 |
+| **Exp 0** | **YOLOv8n** | Random Split / 욜로기본증강설정 | v8n | 640 | 50 | 0 | auto | - | - | 0.959 | 0.935 | - | **0.950** | - | - | 50 | 2.00 | - | • 극단적 데이터 누수 발생 / 캐글 베이스라인 로컬 재현 |
+| **Exp 1-1** | **Stratified** | YOLO 기본증강 + Stratified | v8n | 640 | 20 | 0(추정) | - | - | - | 0.402 | 0.384 | - | **0.395** | - | - | 20 | 2.14 | - | 계층적 분할 시작 |
+| **Exp 1-2**| **Stratified** | YOLO 기본증강 + Stratified | v8n | 640 | 50 | 0 | auto | - | - | **0.960** | 0.943 | - | 0.945 | - | - | **36** | - | - | 누수 잔존 확인 |
+| **Exp 2** | **v11s Pivot** | YOLO 기본증강 + Stratified | **v11s** | 640 | 50 | 0 | auto | - | - | **0.994** | **0.990** | - | **0.995** | - | - | **50** | 3.08 | - | 모델 교체 |
+| **Exp 3** | **Hi-Res** | YOLO 기본증강 + Stratified | **v11s** | 960 | 50 | 0 | auto | - | - | **0.995** | **0.990** | - | **0.995** | - | - | **50** | 6.30 | - | 해상도 증량 |
+| **Exp 4** | **Flip-Off** | YOLO 기본증강 (Flip Off) | **v11s** | 960 | 50 | 0 | auto | - | - | **0.995** | **0.992** | - | **0.995** | - | - | **50** | 6.06 | - | 각인 보호 효과 |
+| **Exp 5** | **Custom CP** | YOLO 기본증강 (Flip Off) + 커스텀 CP | **v11s** | 960 | 50 | 0 | auto | .25 | .70 | **0.995** | **0.993** | - | **0.995** | - | - | **50** | 13.01 | 0.074 | **Kaggle 0.968** (YOLO 내장 copy_paste옵션 아님) |
+| **Exp 6** | **Rotation** | YOLO 기본 (Flip Off) + CP + Rotation | **v11s** | 960 | 50 | 0 | auto | - | - | 0.990 | 0.940 | - | 0.995 | - | - | 50 | 13.17 | 0.065 | **Kaggle 0.854** |
+| **Exp 7** | **Final-Res** | YOLO 기본 (Flip Off) + CP (No Rot) | **v11s** | 1024| 50 | 0 | auto | - | - | **0.995** | **0.993** | - | **0.995** | - | - | **50** | 14.48 | - | 성능 정체 |
+| **Exp 8** | **Dynamic NMS** | Exp5(best) 기준 NMS 튜닝 | v11s | 1024 | - | 0(Exp5 기반) | - | .20 | .60 | 0.9941 | 0.9926 | - | 0.9941 | - | - | - | - | - | Kaggle: **0.96670**, iou=0.60 튜닝 결과 |
+| **Exp 9** | **Multi-scale WBF** | Exp5 `best.pt` 기반 640/960/1024 추론 + WBF | v11s | Mix | - | 0(Exp5 기반) | - | .20 | .60 | 0.9932 | 0.9896 | - | 0.9932 | - | - | - | - | - | Kaggle: **0.97243** (최고점) |
+| **Exp 10-1**| **Seed 42** | Exp 5 (Seed 42) | v11s | 960 | 50 | **42** | auto | .25 | .70 | 0.9949 | 0.9942 | - | 0.9949 | 0.9950 | 0.9942 | 50 | 13.00 | - | 개별 시드 훈련 1 |
+| **Exp 10-2**| **Seed 123** | Exp 5 (Seed 123) | v11s | 960 | 50 | **123** | auto | .25 | .70 | 0.9950 | 0.9904 | - | 0.9950 | 0.9950 | 0.9904 | 50 | 12.96 | - | 개별 시드 훈련 2 |
+| **Exp 10-3**| **Seed 777** | Exp 5 (Seed 777) | v11s | 960 | 50 | **777** | auto | .25 | .70 | 0.9944 | 0.9932 | - | 0.9944 | 0.9950 | 0.9932 | 50 | 13.03 | - | 개별 시드 훈련 3 |
+| **Exp 10(F)**| **3-Seed Ens**| Exp 10-1~3 WBF 앙상블 | v11s | 960 | - | 42/123/777 | - | .25 | .60 | **0.9942** | **0.9927** | - | **0.9942** | 0.9942 | **0.9927** | - | - | - | **Kaggle: 0.98073 (현재 최고점!!)** |
+| **Exp 11** | **Dirty-Aug** | Exp 5 Clean (fliplr: 0.5 오설정) | v11s | 960 | 50 | 0 | auto | .25 | .70 | 0.9696 | 0.9696 | 0.9696 | 0.9931 | 0.9950 | 0.9899 | 50 | 13.70 | 0.070 | **[기각]** 변인 통제 실패 (Kaggle: 0.95910) |
+| **Exp 12** | **Cleaned-Base** | **Exp 5 Clean (fliplr: 0.0 복구)** | v11s | 960 | 50 | 0 | auto | .25 | .70 | **0.9740** | **0.9649** | **0.9694** | **0.9946** | **0.9950** | **0.9933** | 50 | 13.40 | 0.072 |  (Kaggle: 0.96528) |
+| **Exp 13** | **Baseline-1.0 Rebuild** | 베이스라인 1.0재현 실패(fliplr: 0.0 오설정) | v8n | 640 | 50 | 42 | auto | .25 | .70 | 0.9362 | 0.9887 | 0.9617 | 0.9890 | 0.9950 | 0.9800 | 50 | 4.36 | 0.216 | `metrics/exp_baseline_yolov8n_1.0_val_metrics.json` / Kaggle: **0.94032** |
+| **Exp 14** | **Baseline-1.0 Rebuild** | 베이스라인 2.0 재현(`fliplr: 0.5` 복구) | v8n | 640 | 50 | 42 | auto(→AdamW) | .25 | .70 | 0.9485 | 0.9918 | 0.9697 | 0.9878 | 0.9950 | 0.9717 | 50 | 4.29 | 0.219 | `metrics/exp14_train_baseline_yolov8n_1.0_val_metrics.json` / Kaggle: **0.93808** |
+| **Exp 15** | **Baseline-2.0 Canonical** | Exp12 applied 값(AdamW) 고정 + seed42 기준 팀원 공유용 베이스라인 정리 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9704 | 0.9761 | 0.9733 | 0.9918 | 0.9950 | 0.9897 | 50 | 14.11 | 0.068 | `metrics/exp15_train_baseline_yolo11s_2.0_val_metrics.json` / `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml` / Kaggle: **0.96455** |
+| **Exp 16** | **Res-640 Sweep** | Exp15 고정값 유지 + 해상도만 `960→640` 변경 (증강 파라미터 동결) | v11s | 640 | 50 | 42 | AdamW | .25 | .70 | 0.9690 | 0.9861 | 0.9774 | 0.9916 | 0.9950 | 0.9892 | 50 | 6.83 | 0.142 | `metrics/exp16_train_yolo11s_res640_val_metrics.json` / `configs/inference/exp16_inference_yolo11s_res640.yaml` / Kaggle: **0.96723** |
+| **Exp 17** | **Res-1024 Sweep** | Exp15 고정값 유지 + 해상도만 `960→1024` 변경 (증강 파라미터 동결) | v11s | 1024 | 50 | 42 | AdamW | .25 | .70 | 0.9692 | 0.9863 | 0.9777 | 0.9929 | 0.9950 | 0.9900 | 50 | 14.90 | 0.065 | `metrics/exp17_train_yolo11s_res1024_val_metrics.json` / `configs/inference/exp17_inference_yolo11s_res1024.yaml` / Kaggle: **0.97292** |
+| **Exp 18** | **Res-1280 Benchmark** | Exp15 고정값 유지 + 해상도만 `960→1280` 변경 (증강 파라미터 동결) | v11s | 1280 | 50 | 42 | AdamW | .25 | .70 | 0.9706* | 0.9634* | 0.9670* | 0.9909* | - | 0.9890* | 50 | 112.21 | - | `runs/exp18_train_yolo11s_res1280/weights/best.pt` / 학습 완료(50ep) 후 final val 단계 OOM(`Killed`)로 metrics json 자동저장 실패 / Kaggle: **TBD** |
+
+> `*` Exp18의 P/R/F1/mAP는 `results.csv`의 50epoch 행 값 기준(학습 중 val 로그)이며, `train_yolo.py`의 final `model.val()` 결과값은 OOM 종료로 미기록.
 
 
 ### Exp 예비 (시간 여유 시 진행)
@@ -247,12 +252,43 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   **목적**: Exp12에서 `optimizer=auto`로 요청했을 때 실제 적용된 AdamW 계열 하이퍼파라미터를 명시 고정해, 팀 배포용 베이스라인을 하나로 통일.
 *   **실행 조건**: `optimizer=AdamW`, `lr0=0.000167`, `momentum=0.9`, `warmup_bias_lr=0.0`, `seed=42`, `imgsz=960`, `batch=16`.
 *   **결과**: `Precision=0.9704`, `Recall=0.9761`, `F1=0.9733`, `mAP50=0.9918`, `mAP75=0.9950`, `mAP@50-95=0.9897`.
+*   **학습 시간**: `results.csv` 누적 시간 기준 `846.882s` (`14.11m`).
 *   **Kaggle 재현성 비교**: `exp12=0.96528`, `exp15=0.96455`, 차이 `-0.00073`.
 *   **해석**: `0.00073` 차이는 매우 작은 편으로 실질적으로는 거의 동일 성능대이며, `seed`를 `0 -> 42`로 변경한 만큼 완전 동일 점수가 나오지 않는 것은 정상 범주로 판단.
 *   **명명 정리**: 학습/추론 기준명을 모두 `2.0`으로 통일함.
     *   train: `runs/exp15_train_baseline_yolo11s_2.0`
     *   infer config: `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml`
 *   **근거 파일**: `metrics/exp15_train_baseline_yolo11s_2.0_val_metrics.json`
+
+### [Exp 16] Resolution Sweep (YOLO11s, 640px)
+*   **목적**: 증강 변수 개입 없이 해상도 변화 효과만 분리 측정하기 위해, Exp15 설정을 그대로 유지한 채 입력 해상도만 `640`으로 축소.
+*   **실행 조건**: `optimizer=AdamW`, `seed=42`, `imgsz=640`, `batch=16`, 증강 파라미터(`hsv/mosaic/erasing/auto_augment`)는 Exp15와 동일.
+*   **결과**: `Precision=0.9690`, `Recall=0.9861`, `F1=0.9774`, `mAP50=0.9916`, `mAP75=0.9950`, `mAP@50-95=0.9892`.
+*   **학습 시간**: `results.csv` 누적 시간 기준 `409.986s` (`6.83m`).
+*   **Kaggle 결과**: Public Score **0.96723** (`vs Exp15 +0.00268`).
+*   **해석**: Local `mAP@50-95`는 Exp15 대비 소폭 하락(`0.9897 → 0.9892`)했지만 Kaggle은 상승해, 실전 일반화 관점에서는 640 설정이 유리하게 작동함.
+*   **산출물**: `runs/exp16_train_yolo11s_res640/weights/best.pt`, `submission/exp16_yolo11s_res640.csv`
+*   **근거 파일**: `metrics/exp16_train_yolo11s_res640_val_metrics.json`, `configs/inference/exp16_inference_yolo11s_res640.yaml`
+
+### [Exp 17] Resolution Sweep (YOLO11s, 1024px)
+*   **목적**: Exp15 고정 하이퍼파라미터에서 고해상도(`1024`) 입력이 성능에 미치는 영향을 단일 변수로 검증.
+*   **실행 조건**: `optimizer=AdamW`, `seed=42`, `imgsz=1024`, `batch=16`, 나머지 조건 Exp15와 동일.
+*   **결과**: `Precision=0.9692`, `Recall=0.9863`, `F1=0.9777`, `mAP50=0.9929`, `mAP75=0.9950`, `mAP@50-95=0.9900`.
+*   **학습 시간**: `results.csv` 누적 시간 기준 `894.107s` (`14.90m`).
+*   **Kaggle 결과**: Public Score **0.97292** (`vs Exp15 +0.00837`, `vs Exp16 +0.00569`).
+*   **해석**: Local/Kaggle 모두 Exp16 대비 우세하며, 현재 단일 모델 해상도 비교군(640/960/1024)에서는 `1024`가 가장 강한 선택지.
+*   **산출물**: `runs/exp17_train_yolo11s_res1024/weights/best.pt`, `submission/exp17_yolo11s_res1024.csv`
+*   **근거 파일**: `metrics/exp17_train_yolo11s_res1024_val_metrics.json`, `configs/inference/exp17_inference_yolo11s_res1024.yaml`
+
+### [Exp 18] Resolution Benchmark (YOLO11s, 1280px)
+*   **목적**: 해상도 상한선(1280)에서 성능/시간 효율을 벤치마크하고, 이후 실험 해상도 전략(탐색 vs 최종검증)의 근거를 확보.
+*   **실행 조건**: `optimizer=AdamW`, `seed=42`, `imgsz=1280`, `batch=16`, `workers=8`, 증강 파라미터는 Exp15와 동일.
+*   **학습 상태**: `50 epochs completed in 1.870 hours`로 학습 완료. `best.pt`, `last.pt` 저장 확인.
+*   **학습 시간**: `results.csv` 누적 시간 기준 `6732.89s` (`112.21m`).
+*   **지표 기록 주의**: 학습 종료 직후 실행된 final `model.val()` 단계에서 OOM으로 프로세스가 `Killed`되어 `metrics/exp18_..._val_metrics.json` 자동 저장은 실패.
+*   **임시 지표(`results.csv` 50epoch 행)**: `Precision=0.97062`, `Recall=0.96341`, `mAP50=0.99085`, `mAP@50-95=0.98902`.
+*   **산출물**: `runs/exp18_train_yolo11s_res1280/weights/best.pt`, `configs/inference/exp18_inference_yolo11s_res1280.yaml`
+*   **Kaggle 결과**: **TBD** (추후 업데이트 예정)
 
 
 

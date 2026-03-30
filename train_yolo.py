@@ -10,6 +10,7 @@ YOLO 학습과 validation 평가를 한 번에 수행하는 학습 스크립트.
 
 from pathlib import Path
 import argparse
+import csv
 import datetime
 import json
 import re
@@ -449,6 +450,50 @@ def save_auto_inference_config(
     return infer_config_path
 
 
+def read_training_time_stats(run_dir: Path) -> dict:
+    """
+    Ultralytics results.csv의 마지막 누적 time 값을 읽어 학습 시간 통계를 반환한다.
+    """
+    results_csv_path = run_dir / "results.csv"
+    stats = {
+        "train_results_csv": to_project_relative(results_csv_path),
+        "train_completed_epochs": 0,
+        "train_time_seconds": None,
+        "train_time_minutes": None,
+        "avg_epoch_time_seconds": None,
+    }
+    if not results_csv_path.exists():
+        return stats
+
+    try:
+        with results_csv_path.open("r", encoding="utf-8", newline="") as f:
+            rows = list(csv.DictReader(f))
+    except Exception:
+        return stats
+
+    if not rows:
+        return stats
+
+    last_row = rows[-1]
+    stats["train_completed_epochs"] = len(rows)
+
+    raw_time = (last_row.get("time") or "").strip()
+    if not raw_time:
+        return stats
+
+    try:
+        elapsed_seconds = float(raw_time)
+    except ValueError:
+        return stats
+
+    stats["train_time_seconds"] = elapsed_seconds
+    stats["train_time_minutes"] = elapsed_seconds / 60.0
+    if stats["train_completed_epochs"] > 0:
+        stats["avg_epoch_time_seconds"] = elapsed_seconds / float(stats["train_completed_epochs"])
+
+    return stats
+
+
 def main() -> None:
     args = parse_args()
     log_session = start_run_logging(
@@ -552,6 +597,7 @@ def main() -> None:
                 first_group = param_groups[0]
                 resolved_lr = first_group.get("lr")
                 resolved_weight_decay = first_group.get("weight_decay")
+    train_time_stats = read_training_time_stats(train_save_dir)
 
     print("Training finished. Evaluating best model metrics...")
     
@@ -603,6 +649,11 @@ def main() -> None:
         "imgsz": int(args.imgsz),
         "batch": int(args.batch),
         "best_epoch": int(getattr(val_results, "epoch", args.epochs)),
+        "train_results_csv": train_time_stats["train_results_csv"],
+        "train_completed_epochs": int(train_time_stats["train_completed_epochs"]),
+        "train_time_seconds": float(train_time_stats["train_time_seconds"]) if train_time_stats["train_time_seconds"] is not None else None,
+        "train_time_minutes": float(train_time_stats["train_time_minutes"]) if train_time_stats["train_time_minutes"] is not None else None,
+        "avg_epoch_time_seconds": float(train_time_stats["avg_epoch_time_seconds"]) if train_time_stats["avg_epoch_time_seconds"] is not None else None,
         "Precision": float(precision),
         "Recall": float(recall),
         "F1-Score": float(f1_score),
@@ -631,6 +682,13 @@ def main() -> None:
     print(f" ➡️  mAP@50:    {map50:.4f}")
     print(f" ➡️  mAP@75:    {map75:.4f}")
     print(f" ➡️  mAP@50-95: {map50_95:.4f}")
+    if train_time_stats["train_time_seconds"] is not None:
+        print(
+            " ➡️  train time:"
+            f" {train_time_stats['train_time_seconds']:.1f}s"
+            f" ({train_time_stats['train_time_minutes']:.2f}m)"
+            f" / avg {train_time_stats['avg_epoch_time_seconds']:.2f}s/epoch"
+        )
     print(f" ➡️  saved:     {metrics_path}")
     print(f" ➡️  run dir:   {train_save_dir}")
     print(f" ➡️  infer cfg: {infer_config_path}")
