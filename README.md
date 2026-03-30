@@ -184,6 +184,7 @@ Exp 15 실험을 재현하거나 이를 바탕으로 새 실험을 시작하려�
 ---
 ## 💡 가중치 운영 가이드 (Weights Policy)
 Google Drive로 공유받은 가중치는 아래 경로에 그대로 배치하는 것을 권장합니다.
+https://drive.google.com/drive/folders/1aR9h-X7ZMsv2_x96E2IfMehTS60A5nnc?dmr=1&ec=wgc-drive-%5Bmodule%5D-goto
 
 ```bash
 # 예시: Exp 15 베이스라인 가중치 배치
