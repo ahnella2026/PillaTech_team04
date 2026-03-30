@@ -5,8 +5,11 @@ PillaTech 4팀의 알약 객체 탐지(Object Detection) 프로젝트입니다.
 배포 버전 기준은 **`v15 = Exp15 Baseline 2.0`** 으로 고정합니다.
 
 > [!IMPORTANT]
-> **데이터 무결성 확보 (2026-03-27, 과거 이력)**: 
-> 이전의 **Exp 1~10** 실험 데이터셋에는 9건의 어노테이션 오류가 존재했을 수도 있습니다. 팀 협의를 통해 모든 오류를 수정한 **Exp 15**를 2차 베이스라인으로 확정했습니다.(exp12에서 실험재현성 로그기록 상세히 추가한 버전)상세 내역은 [experiments.md](./experiments.md)를 참고하세요.
+> **데이터 무결성 확보**(2026-03-27):
+> 이전의 **Exp 1~10** 실험 데이터셋에는 9건의 어노테이션 오류가 존재했을 수도 있습니다.
+> 팀 협의를 통해 데이터클리닝 오류를 수정한 **Exp 12**를 당시 2차 베이스라인으로 확정했습니다. 
+> 이후 재현성 로그 체계를 강화해 2026-03-30 기준은 **Exp 15 Baseline 2.0**입니다.
+> 상세 내역은 [experiments.md](./experiments.md)를 참고하세요.
 
 ---
 
@@ -139,47 +142,49 @@ python preprocessing.py
 python prepare_yolo_dataset.py
 ```
 
-### 3단계: 학습 시작 (Exp 15 기준)
-Exp 15 실험을 재현하거나 이를 바탕으로 새 실험을 시작하려면 다음을 참고하세요:
-
-1. **기본 데이터셋**: `data/yolo_dataset/dataset.yaml` 경로를 기본으로 사용합니다. 별도 명시가 없으면 이 경로의 데이터를 불러옵니다.
-   ```bash
-   python train_yolo.py --config configs/train/exp15_train_baseline_yolo11s_2.0.yaml
-   ```
-
-2. **커스텀 데이터셋**: 다른 경로의 데이터셋을 사용하고 싶다면 `--data` 옵션으로 명시하면 됩니다.
-   ```bash
-   # 다른 데이터셋 경로 사용 예시
-   python train_yolo.py --config configs/train/exp15_train_baseline_yolo11s_2.0.yaml --data <path/to/dataset.yaml>
-   ```
-
----
-## 💡 가중치 운영 가이드 (Weights Policy)
-
+### 3단계: 가중치 세팅 (공유 가중치 사용 시)
 - Exp 15 베이스라인 가중치(Google Drive): https://drive.google.com/drive/folders/1aR9h-X7ZMsv2_x96E2IfMehTS60A5nnc?dmr=1&ec=wgc-drive-%5Bmodule%5D-goto
-
 - 팀원분들은 가중치를 아래 경로에 동일하게 배치해주세요.
+
 ```bash
 mkdir -p runs/exp15_train_baseline_yolo11s_2.0/weights/
 # best.pt를 위 폴더에 저장
 ```
 
-**기준 파일 경로**
+기준 파일 경로
 - `runs/exp15_train_baseline_yolo11s_2.0/weights/best.pt`
 - `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml`의 `model`이 위 경로를 참조합니다.
 - `runs/`는 용량 이슈로 일반적으로 Git에 포함하지 않습니다.
 
+### 4단계: 실행 분기 (Exp 15 기준, 가중치 유무)
+Exp 15 기준 실행은 `best.pt` 존재 여부로 나눕니다.
+1. 가중치가 이미 있으면 (빠른 경로: 추론만 실행)
+```bash
+python src/test_custom.py --config configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml
+```
+
+2. 가중치가 없으면 (재현 경로: 학습 후 추론)
+```bash
+python train_yolo.py --config configs/train/exp15_train_baseline_yolo11s_2.0.yaml
+```
+```bash
+python src/test_custom.py --config configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml
+```
+
+3. 커스텀 데이터셋으로 학습하려면 (`--data`)
+```bash
+python train_yolo.py --config configs/train/exp15_train_baseline_yolo11s_2.0.yaml --data <path/to/dataset.yaml>
+```
+```bash
+python src/test_custom.py --config configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml
+```
+
 ### ⚙️ 추론 권장 설정 (Inference Settings)
-Exp 15 베이스라인과 동일한 성능을 재현하려면 추론 시 아래 파라미터를 반드시 준수하거나 '전용 설정'파일을 사용하세요.
-
-*   **설정 파일**: `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml`
-*   **해상도 (`imgsz`)**: **960**
-*   **임계값**: `conf: 0.25`, `iou: 0.70`
-*   **전용 설정의 의미**: 여기서 전용 설정은 **추론용 설정 파일**(`configs/inference/...`)을 의미합니다. (`configs/train/...`은 학습용)
-*   **실행 분기**
-    *   가중치가 이미 있으면: `python src/test_custom.py --config configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml`
-    *   Exp 15를 처음부터 재현하면: `python train_yolo.py --config configs/train/exp15_train_baseline_yolo11s_2.0.yaml` 실행 후 위 추론 명령 실행
-
+Exp 15 베이스라인과 동일한 성능을 재현하려면 아래 파라미터를 유지하세요.
+- 설정 파일: `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml`
+- 해상도(`imgsz`): `960`
+- 임계값: `conf=0.25`, `iou=0.70`
+- 실행 명령은 위 `4단계: 실행 분기`를 따릅니다.
 
 ---
 
@@ -197,7 +202,7 @@ Exp 15 베이스라인과 동일한 성능을 재현하려면 추론 시 아래 
 ## 📈 실험 고도화 가이드 (Next Step)
 현재 팀의 최고 점수는 오염된 데이터가 유입되었을 수도 있는 **Exp 10 (3-Seed Ensemble / Kaggle: 0.98073)** 입니다. 
 
-1.  **설정 상속**: `configs/train/exp15_train_baseline_yolo11s_2.0.yaml`을 복사하여 모델 size(`yolo11m`) 혹은 새로운 아키텍처(RT-DETR 등)로 확장하세요.
+1.  **설정 상속**: `configs/train/exp15_train_baseline_yolo11s_2.0.yaml`안의 내용을 복사하여 모델 size(`yolo11m`) 혹은 새로운 아키텍처(RT-DETR 등)로 확장하세요.
 2.  **앙상블 전략**: 정제된 Exp 15 가중치를 바탕으로 시드 앙상블 혹은 멀티스케일 추론(`src/ensemble_wbf.py`)을 적용하여 0.99 돌파를 목표로 해봅시다. 
 
 ---
