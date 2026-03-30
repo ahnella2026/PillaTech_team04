@@ -1,4 +1,4 @@
-# 💊 PillaTech 알약 탐지 프로젝트 (Team 04)_260327
+# 💊 PillaTech 알약 탐지 프로젝트 (Team 04)_260330
 
 PillaTech 4팀의 알약 객체 탐지(Object Detection) 프로젝트입니다. 
 이 가이드는 **Exp 12 Cleaned Baseline**을 바탕으로 실험을 고도화하려는 팀원들을 위한 온보딩 매뉴얼입니다.
@@ -32,10 +32,12 @@ graph TD
 - **`configs/train/`**: 학습 설정 YAML
 - **`configs/inference/`**: 추론 설정 YAML
 - **`src/test_custom.py`**: 추론 스크립트 (config/CLI 지원)
-- **`runs/exp12_train_yolo11s_noflip/weights/best.pt`**: v12(Exp12) 배포 가중치 (Drive 공유 후 이 경로에 배치)
+- **`runs/exp15_train_baseline_yolo11s_2.0/weights/best.pt`**: v15(Exp15) 배포 가중치
 - **`data/raw/sprint_ai_project1_data/`**: 원본 데이터 (train/test images, annotations)
 - **`data/yolo_dataset/`**: 학습에 직접 사용하는 YOLO 포맷 데이터셋
-- **`metrics/`**: validation 성능 리포트 JSON
+- **`logs/train/`**: 학습 런타임 로그
+- **`metrics/train/`**: 학습 성능/메타 리포트 JSON
+- **`metrics/infer/`**: 추론 런타임/환경 리포트 JSON
 - **`submission/`**: 제출용 CSV 로컬 산출물 (Git 미추적, `.gitignore`)
 
 상세한 실험별 경로, runs 폴더 계보, 재현 커맨드는 `experiments.md`를 참고하세요.
@@ -48,10 +50,15 @@ PillaTech_team04/
 ├── preprocessing.py               # 데이터 정제/병합/합성 파이프라인
 ├── prepare_yolo_dataset.py        # YOLO 포맷 데이터셋 구축 스크립트
 ├── train_yolo.py                  # 학습 실행기
+├── scripts/exp10/run_exp10_batch.sh  # (레거시) exp10 실행 스크립트
 ├── src/                           # 추론/앙상블/평가 스크립트
 │   ├── test_custom.py             # 추론 엔진 (config/CLI 지원)
 │   ├── ensemble_wbf.py            # WBF 앙상블
-│   └── exp8_search.py             # NMS 파라미터 탐색
+│   ├── eval_csv_map.py            # CSV 로컬 mAP 평가
+│   ├── exp8_search.py             # NMS 파라미터 탐색
+│   └── utils/                     # 공통 유틸
+│       ├── logging_utils.py       # 런타임 로깅 유틸
+│       └── metrics_utils.py       # 메트릭/환경 수집 유틸
 ├── scripts/                       # 실험 파이프라인 실행용 셸 스크립트
 │   ├── exp5/
 │   ├── exp9/
@@ -69,12 +76,16 @@ PillaTech_team04/
 │   └── yolo_dataset/              # 학습에 직접 쓰는 YOLO 포맷 데이터셋
 │       ├── images/
 │       └── labels/
-
-├── runs/                          # 학습 산출물 (weights/logs/plots)  # 보통 Git 미추적
-│   ├── exp12_train_yolo11s_noflip/         # v12(Exp12) 베이스라인
-│   │   └── weights/                        # best.pt, last.pt
-│   └── ...                                 # 기타 실험 폴더들
-├── metrics/                       # validation 성능 리포트 JSON
+├── logs/                          # 실행 로그
+│   └── train/                     # 학습 로그
+├── runs/                          # 학습 산출물 (weights/plots/args/results)
+│   ├── exp12_train_yolo11s_noflip/
+│   ├── exp15_train_baseline_yolo11s_2.0/
+│   └── detect/                    # Ultralytics val 산출물
+├── metrics/                       # 성능 리포트(JSON)
+│   ├── train/                     # 학습 메트릭
+│   ├── infer/                     # 추론 런타임 메트릭
+│   └── *.json                     # 레거시/호환 파일
 ├── submission/                    # 제출용 CSV 로컬 산출물 (Git 미추적, .gitignore)
 └── weights/                       # (선택) 베이스 모델 파일 보관 (yolo11s.pt 등)
 ```
@@ -105,6 +116,12 @@ pip install -r requirements.txt
 > [!NOTE]
 > `requirements.txt`는 `codeit` 가상환경에서 검증된 모든 패키지 버전을 포함하고 있습니다. 환경 차이로 인한 오류를 방지하기 위해 반드시 위 명령어로 설치를 권장합니다.
 
+### 1-1단계: OS별 실행 기준 (Windows / WSL / Mac)
+- **공식 기준은 Linux 계열 실행환경**입니다.
+- **Windows 사용자는 WSL2(Ubuntu)에서 실행**합니다. 팀 운영상 WSL은 Linux로 간주합니다.
+- **Windows 네이티브(PowerShell/CMD) 실행은 비권장**입니다. 경로/패키지 차이로 재현성 이슈가 커집니다.
+- **Mac은 개발/디버깅/소규모 검증용**으로 사용하고, 최종 학습/제출 산출물은 공식 Linux(또는 WSL2 Ubuntu) 기준으로 확정합니다.
+
 ### 2단계: 데이터 준비 (Exp 12 기준)
 원본 이미지 데이터를 아래 구조(Folder Structure)에 맞춰 `data/raw/` 폴더에 배치합니다. 
 
@@ -125,7 +142,7 @@ python prepare_yolo_dataset.py
 ```
 
 ### 3단계: 학습 시작 (Exp 12 상속)
-Exp 12 실험을 재현하거나 이를 바탕으로 새 실험을 시작하려면 다음을 참고하세요:
+Exp 15 실험을 재현하거나 이를 바탕으로 새 실험을 시작하려면 다음을 참고하세요:
 
 1. **기본 데이터셋**: `data/yolo_dataset/dataset.yaml` 경로를 기본으로 사용합니다. 별도 명시가 없으면 이 경로의 데이터를 불러옵니다.
    ```bash
@@ -137,6 +154,36 @@ Exp 12 실험을 재현하거나 이를 바탕으로 새 실험을 시작하려�
    # 다른 데이터셋 경로 사용 예시
    python train_yolo.py --config configs/train/exp12_train_yolo11s_noflip.yaml --data <path/to/dataset.yaml>
    ```
+
+---
+## 🧪 Kaggle 팀 운영 가이드 (Windows 1, WSL2 1, Mac 2 혼합 환경)
+**“각자 로컬에서 다시 추론해서 제출”**이 아니라 **“공식 컴퓨터에서 생성한 CSV를 제출”**하는 것으로 고정해야 점수 드리프트를 막을 수 있습니다.
+
+### 운영 권장 시나리오
+- **개발/탐색 트랙**: 각자 OS에서 자유롭게 실험 
+- **공식 검증/제출 트랙**: 1대의 공식 컴퓨터에서만 최종 재실행/제출
+- **공식 점수 기준**: Kaggle 제출 CSV는 공식 환경 산출물만 인정
+
+### 시간 제약 대응 (현실적인 운영)
+- 모든 실험을 1명이 돌리지 않습니다.
+- 각자 로컬에서 후보 실험들을 탐색합니다.
+- 상위 후보만 공식 환경에서 재학습/재추론합니다. 
+- 제출은 공식 환경에서 만든 CSV만 사용합니다. 
+
+### 재현성 체크리스트 (최종 후보 필수)
+- `configs/train/*.yaml` (학습 입력값)
+- `configs/inference/*.yaml` (추론 입력값)
+- `metrics/train/*_metrics.json` (학습 결과/적용값)
+- `metrics/infer/*_infer_runtime.json` (추론 실행 환경)
+- `runs/.../weights/best.pt` (가중치)
+- `submission/*.csv` (제출 파일)
+
+### 주의사항
+- 각자 로컬에서 같은 설정으로 다시 추론하면 OS/torch 차이로 CSV가 달라질 수 있습니다. 
+- 제출 직전 가중치 경로/파일명이 섞이면 다른 모델이 제출될 수 있습니다.
+
+
+
 
 ---
 ## 💡 가중치 운영 가이드 (Weights Policy)

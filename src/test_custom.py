@@ -8,6 +8,7 @@
 """
 
 import argparse
+import datetime
 import os
 import pandas as pd
 import re
@@ -24,11 +25,42 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-from logging_utils import start_run_logging
+from src.utils.logging_utils import start_run_logging
+from src.utils.metrics_utils import collect_runtime_env, write_metrics_json
 
 DEFAULT_TEST_IMG_DIR = PROJECT_ROOT / "data" / "raw" / "sprint_ai_project1_data" / "test_images"
 DEFAULT_YAML_PATH = PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
 DEFAULT_JSON_DIR = PROJECT_ROOT / "data" / "raw" / "sprint_ai_project1_data" / "train_annotations"
+DEFAULT_INFER_METRICS_DIR = PROJECT_ROOT / "metrics" / "infer"
+
+
+def save_infer_runtime_metadata(
+    run_name: str,
+    model_path: str,
+    output_csv: str,
+    device: str = "0",
+) -> Path:
+    """
+    추론 실행 환경 메타데이터를 저장한다.
+    실무 재현성 추적용으로 train_yolo.py와 동일한 환경 필드를 기록한다.
+    """
+    runtime_env = collect_runtime_env(device)
+    payload = {
+        "run_name": run_name,
+        "timestamp": datetime.datetime.now().isoformat(),
+        "model_path": str(model_path),
+        "output_csv": str(Path(output_csv).resolve()),
+        "os_platform": runtime_env.get("os_platform"),
+        "python_version": runtime_env.get("python_version"),
+        "torch_version": runtime_env.get("torch_version"),
+        "cuda_version": runtime_env.get("cuda_version"),
+        "gpu_name": runtime_env.get("gpu_name"),
+        "gpu_driver": runtime_env.get("gpu_driver"),
+    }
+    DEFAULT_INFER_METRICS_DIR.mkdir(parents=True, exist_ok=True)
+    save_path = DEFAULT_INFER_METRICS_DIR / f"{run_name}_infer_runtime.json"
+    write_metrics_json(payload, save_path)
+    return save_path
 
 def parse_args():
     """
@@ -250,6 +282,14 @@ def run_test_and_save_csv():
     df = pd.DataFrame(results_list)
     df.to_csv(OUTPUT_CSV, index=False)
     print(f"\n✅ 분석 완료! 파일 저장됨: {os.path.abspath(OUTPUT_CSV)}")
+
+    runtime_meta_path = save_infer_runtime_metadata(
+        run_name=run_name,
+        model_path=MODEL_PATH,
+        output_csv=OUTPUT_CSV,
+        device=str(getattr(cli_args, "device", "0")),
+    )
+    print(f"📊 추론 런타임 메타 저장됨: {runtime_meta_path}")
     
     # --- Auto Logging Logic --- #
     if cli_args.save_config and not cli_args.config:

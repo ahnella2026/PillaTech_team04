@@ -54,6 +54,7 @@ git restore --source=pred/yewon train_annotations
 | **Exp 12** | **Cleaned-Base** | **Exp 5 Clean (fliplr: 0.0 복구)** | v11s | 960 | 50 | 0 | auto | .25 | .70 | **0.9740** | **0.9649** | **0.9694** | **0.9946** | **0.9950** | **0.9933** | 50 | **[신뢰 베이스라인 세팅 완료]** (Kaggle: 0.96528) |
 | **Exp 13** | **Baseline-1.0 Rebuild** | 베이스라인 1.0재현 실패(fliplr: 0.0 오설정) | v8n | 640 | 50 | 42 | auto | .25 | .70 | 0.9362 | 0.9887 | 0.9617 | 0.9890 | 0.9950 | 0.9800 | 50 | `metrics/exp_baseline_yolov8n_1.0_val_metrics.json` / Kaggle: **0.94032** |
 | **Exp 14** | **Baseline-2.0 Rebuild** | 베이스라인 2.0 재현(`fliplr: 0.5` 복구) | v8n | 640 | 50 | 42 | auto(→AdamW) | .25 | .70 | 0.9485 | 0.9918 | 0.9697 | 0.9878 | 0.9950 | 0.9717 | 50 | `metrics/exp14_train_baseline_yolov8n_1.0_val_metrics.json` / Kaggle: **0.93808** |
+| **Exp 15** | **Baseline-2.0 Canonical** | Exp12 applied 값(AdamW) 고정 + seed42 기준 배포용 베이스라인 정리 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9704 | 0.9761 | 0.9733 | 0.9918 | 0.9950 | 0.9897 | 50 | `metrics/exp15_train_baseline_yolo11s_2.0_val_metrics.json` / `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml` |
 
 
 ### Exp 예비 (시간 여유 시 진행)
@@ -173,7 +174,7 @@ Exp 7(1024px 리사이즈) 실험 이후, 훈련 비용이 큰 모델 업그레�
 *   **로컬 검증 결과**: `metrics/exp9_val_metrics.json` 기준 `mAP50=0.9932`, `mAP@50-95=0.9896`, `mAP@75=0.9932`.
 *   **통찰**: 재학습 없이 단일 가중치의 다중 해상도 예측을 WBF로 병합하는 방식만으로도, 로컬 `validation` 기준 높은 성능을 유지하면서 Kaggle Public Score **0.97243**까지 도달함.
 *   **시행착오**: Exp 9는 처음에는 `test_images` 기반 제출용 WBF 실험으로만 수행되었고, 이후 표 기록 및 근거 정리를 위해 `validation` 기준 WBF 평가를 별도로 추가 수행함.
-*   **재현**: `bash scripts/exp9/run_exp9_val.sh` (로컬 validation 평가), `bash run_exp9.sh` (캐글 제출용 test 추론)
+*   **재현**: `bash scripts/exp9/run_exp9_val.sh` (로컬 validation 평가), `bash scripts/exp9/run_exp9_test.sh` (캐글 제출용 test 추론)
 
 ### [심층 리포트] NMS vs WBF의 IoU 파라미터 역할 차이 (Exp 8 vs Exp 9)
 Exp 8에서 로컬 검증 기준 최적 밸런스(`mAP@50-95=0.9926`)를 보인 `iou=0.60` 설정을 Exp 9의 멀티스케일 앙상블 파이프라인에 적용함. 다만 Exp 9의 Kaggle 0.97243은 `iou=0.60` 하나의 효과라기보다, **멀티스케일 추론 + 해상도별 NMS + WBF 병합이 함께 작동한 결과**로 해석하는 것이 더 정확함. 
@@ -242,6 +243,15 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   **근거 파일**: `metrics/exp14_train_baseline_yolov8n_1.0_val_metrics.json`, `submission/exp14_baseline_yolov8n_1.0.csv`
 *   **후속 액션**: 초기 0.7점대 제출을 기록한 팀원에게 당시 학습/추론 설정 YAML 원본 공유 요청 필요하나 당시 상황에서는 이런 부분을 생각하지 못하고 기록을 안했기 때문에, 모든 팀원이 동일한 환경으로 베이스라인 1.0 재현 불가
 
+### [Exp 15] Baseline-2.0 Canonical (YOLO11s, Applied-Fix)
+*   **목적**: Exp12에서 `optimizer=auto`로 요청했을 때 실제 적용된 AdamW 계열 하이퍼파라미터를 명시 고정해, 팀 배포용 베이스라인을 하나로 통일.
+*   **실행 조건**: `optimizer=AdamW`, `lr0=0.000167`, `momentum=0.9`, `warmup_bias_lr=0.0`, `seed=42`, `imgsz=960`, `batch=16`.
+*   **결과**: `Precision=0.9704`, `Recall=0.9761`, `F1=0.9733`, `mAP50=0.9918`, `mAP75=0.9950`, `mAP@50-95=0.9897`.
+*   **명명 정리**: 학습/추론 기준명을 모두 `2.0`으로 통일함.
+    *   train: `runs/exp15_train_baseline_yolo11s_2.0`
+    *   infer config: `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml`
+*   **근거 파일**: `metrics/exp15_train_baseline_yolo11s_2.0_val_metrics.json`
+
 
 
 
@@ -307,11 +317,16 @@ PillaTech_team04/
 ├── preprocessing.py               # 데이터 정제/병합/합성 파이프라인
 ├── prepare_yolo_dataset.py        # YOLO 포맷 데이터셋 구축 스크립트
 ├── train_yolo.py                  # 학습 실행기
+├── scripts/exp10/run_exp10_batch.sh  # (레거시) exp10 실행 스크립트
 ├── src/                           # 추론/앙상블/평가 스크립트
 │   ├── test_custom.py             # 추론 엔진 (config/CLI 지원)
 │   ├── ensemble_wbf.py            # WBF 앙상블
+│   ├── eval_csv_map.py            # CSV 로컬 mAP 평가
 │   ├── exp8_search.py             # NMS 파라미터 탐색
-│   └── data/                      # (내부 유틸/임시 코드)
+│   ├── data/                      # (내부 유틸/임시 코드)
+│   └── utils/                     # 공통 유틸
+│       ├── logging_utils.py
+│       └── metrics_utils.py
 ├── scripts/                       # 실험 파이프라인 실행용 셸 스크립트
 │   ├── exp5/
 │   ├── exp9/
@@ -330,12 +345,16 @@ PillaTech_team04/
 │   └── yolo_dataset/              # 학습에 직접 쓰는 YOLO 포맷 데이터셋
 │       ├── images/
 │       └── labels/
-├── runs/                          # 학습 산출물 (weights/logs/plots)  # 보통 Git 미추적
-│   ├── exp12_train_yolo11s_noflip/         # v12(Exp12) 베이스라인
-│   ├── exp11_train_yolo11s_flip/
-│   ├── ...
+├── logs/                          # 실행 로그
+│   └── train/                     # 학습 로그
+├── runs/                          # 학습 산출물 (weights/plots/args/results)
+│   ├── exp12_train_yolo11s_noflip/
+│   ├── exp15_train_baseline_yolo11s_2.0/
 │   └── detect/                    # Ultralytics val 결과물
-├── metrics/                       # validation 성능 리포트 JSON
+├── metrics/                       # 성능 리포트(JSON)
+│   ├── train/
+│   ├── infer/
+│   └── *.json                     # 레거시/호환 파일
 ├── submission/                    # 제출용 CSV 로컬 산출물 (Git 미추적, .gitignore)
 └── weights/                       # (선택) 베이스 모델 파일 보관 (yolo11s.pt 등)
 ```

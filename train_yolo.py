@@ -19,12 +19,16 @@ import torch
 import yaml
 from ultralytics import YOLO
 
-from logging_utils import start_run_logging
+from src.utils.logging_utils import start_run_logging
+from src.utils.metrics_utils import collect_runtime_env
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_DATA_YAML_PRIMARY = PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
 METRICS_DIR = PROJECT_ROOT / "metrics"
+DEFAULT_INFER_CONFIG_DIR = PROJECT_ROOT / "configs" / "inference"
+DEFAULT_TEST_IMAGES_DIR = PROJECT_ROOT / "data" / "raw" / "sprint_ai_project1_data" / "test_images"
+DEFAULT_JSON_DIR = PROJECT_ROOT / "data" / "raw" / "sprint_ai_project1_data" / "train_annotations"
 
 # 👉 runs 경로를 절대경로로 고정 (핵심)
 RUNS_DIR = PROJECT_ROOT / "runs"
@@ -377,6 +381,74 @@ def infer_model_name(model_path: str) -> str:
     return match.group(1) if match else model_path
 
 
+def to_project_relative(path_value: str | Path) -> str:
+    p = Path(path_value)
+    if not p.is_absolute():
+        p = (PROJECT_ROOT / p).resolve()
+    else:
+        p = p.resolve()
+    try:
+        return str(p.relative_to(PROJECT_ROOT))
+    except ValueError:
+        return str(path_value)
+
+
+def normalize_inference_stem(stem: str) -> str:
+    safe = re.sub(r"\s+", "_", stem.strip())
+    safe = safe.replace("_train_", "_inference_")
+    if safe.startswith("train_"):
+        safe = "inference_" + safe[len("train_"):]
+    if safe.endswith("_train"):
+        safe = safe[:-6] + "_inference"
+    return safe or "inference"
+
+
+def ensure_inference_token(stem: str) -> str:
+    safe = normalize_inference_stem(stem)
+    if "_inference_" in safe or safe.startswith("inference_") or safe.endswith("_inference"):
+        return safe
+    match = re.match(r"^(exp\d+)(.*)$", safe, flags=re.IGNORECASE)
+    if match:
+        suffix = match.group(2) or ""
+        return f"{match.group(1)}_inference{suffix}"
+    return f"{safe}_inference"
+
+
+def infer_default_submission_name(inference_stem: str) -> str:
+    return inference_stem.replace("_inference_", "_")
+
+
+def save_auto_inference_config(
+    train_name: str,
+    best_ckpt_path: str | None,
+    data_yaml: Path,
+    imgsz: int,
+) -> Path:
+    """
+    학습 종료 후 기준 추론 설정 YAML을 자동 생성/갱신한다.
+    파일명 규칙: expXX_train_* -> expXX_inference_*.yaml
+    """
+    DEFAULT_INFER_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    inference_stem = ensure_inference_token(train_name)
+    infer_config_path = DEFAULT_INFER_CONFIG_DIR / f"{inference_stem}.yaml"
+
+    model_path = best_ckpt_path or str(RUNS_DIR / train_name / "weights" / "best.pt")
+    infer_yaml = {
+        "model": to_project_relative(model_path),
+        "imgsz": int(imgsz),
+        "conf": 0.25,
+        "iou": 0.70,
+        "output": f"submission/{infer_default_submission_name(inference_stem)}.csv",
+        "test_images": to_project_relative(DEFAULT_TEST_IMAGES_DIR),
+        "data": to_project_relative(data_yaml),
+        "json_dir": to_project_relative(DEFAULT_JSON_DIR),
+        "save_config": True,
+    }
+    with infer_config_path.open("w", encoding="utf-8") as f:
+        yaml.dump(infer_yaml, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+    return infer_config_path
+
+
 def main() -> None:
     args = parse_args()
     log_session = start_run_logging(
@@ -468,6 +540,9 @@ def main() -> None:
     resolved_lr = None
     resolved_weight_decay = None
     trainer = getattr(model, "trainer", None)
+    train_save_dir = Path(getattr(trainer, "save_dir", RUNS_DIR / args.name))
+    actual_run_name = train_save_dir.name
+    best_ckpt_path = str(train_save_dir / "weights" / "best.pt")
     if trainer is not None:
         opt = getattr(trainer, "optimizer", None)
         if opt is not None:
@@ -498,6 +573,7 @@ def main() -> None:
     
     precision = val_results.results_dict.get('metrics/precision(B)', 0.0)
     recall = val_results.results_dict.get('metrics/recall(B)', 0.0)
+    runtime_env = collect_runtime_env(args.device)
     
     f1_score = 0.0
     if precision + recall > 0:
@@ -510,6 +586,12 @@ def main() -> None:
         "optimizer_resolved": resolved_optimizer,
         "optimizer_lr": float(resolved_lr) if resolved_lr is not None else None,
         "optimizer_weight_decay": float(resolved_weight_decay) if resolved_weight_decay is not None else None,
+        "os_platform": runtime_env.get("os_platform"),
+        "python_version": runtime_env.get("python_version"),
+        "torch_version": runtime_env.get("torch_version"),
+        "cuda_version": runtime_env.get("cuda_version"),
+        "gpu_name": runtime_env.get("gpu_name"),
+        "gpu_driver": runtime_env.get("gpu_driver"),
         "seed": args.seed,
         "deterministic": args.deterministic,
         "dataset_split": "val",
@@ -531,6 +613,12 @@ def main() -> None:
     METRICS_DIR.mkdir(parents=True, exist_ok=True)
     metrics_path = METRICS_DIR / f"{args.name}_val_metrics.json"
     metrics_path.write_text(json.dumps(metrics_payload, indent=2), encoding="utf-8")
+    infer_config_path = save_auto_inference_config(
+        train_name=actual_run_name,
+        best_ckpt_path=best_ckpt_path,
+        data_yaml=data_yaml,
+        imgsz=args.imgsz,
+    )
     
     print("\n" + "=" * 60)
     print(f"      EXPERIMENT REPORT: {args.name}")
@@ -544,6 +632,8 @@ def main() -> None:
     print(f" ➡️  mAP@75:    {map75:.4f}")
     print(f" ➡️  mAP@50-95: {map50_95:.4f}")
     print(f" ➡️  saved:     {metrics_path}")
+    print(f" ➡️  run dir:   {train_save_dir}")
+    print(f" ➡️  infer cfg: {infer_config_path}")
     print("=" * 60 + "\n")
 
 

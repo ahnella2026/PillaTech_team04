@@ -22,7 +22,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-from logging_utils import start_run_logging
+from src.utils.logging_utils import start_run_logging
 
 METRICS_DIR = PROJECT_ROOT / "metrics"
 
