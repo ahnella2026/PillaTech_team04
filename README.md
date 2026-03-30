@@ -1,12 +1,12 @@
 # 💊 PillaTech 알약 탐지 프로젝트 (Team 04)_260330
 
 PillaTech 4팀의 알약 객체 탐지(Object Detection) 프로젝트입니다. 
-이 가이드는 **Exp 12 Cleaned Baseline**을 바탕으로 실험을 고도화하려는 팀원들을 위한 온보딩 매뉴얼입니다.
-배포 버전 기준은 **`v12 = Exp12 베이스라인`** 으로 고정합니다.
+이 가이드는 **Exp 15 Baseline 2.0**을 바탕으로 실험을 고도화하려는 팀원들을 위한 온보딩 매뉴얼입니다.
+배포 버전 기준은 **`v15 = Exp15 Baseline 2.0`** 으로 고정합니다.
 
 > [!IMPORTANT]
-> **데이터 무결성 확보 (2026-03-27)**: 
-> 이전의 **Exp 1~10** 실험 데이터셋에는 9건의 어노테이션 오류가 존재했을수도 있습니다. 팀 협의를 통해 모든 오류를 수정한 **Exp 12**를 새로운 **2차 베이스라인**으로 확정했습니다. 상세 내역은 [experiments.md](./experiments.md)를 참고하세요.
+> **데이터 무결성 확보 (2026-03-27, 과거 이력)**: 
+> 이전의 **Exp 1~10** 실험 데이터셋에는 9건의 어노테이션 오류가 존재했을수도 있습니다. 팀 협의를 통해 모든 오류를 수정한 **Exp 12**를 당시 2차 베이스라인으로 확정했습니다. (현재 배포 기준은 Exp 15) 상세 내역은 [experiments.md](./experiments.md)를 참고하세요.
 
 ---
 
@@ -32,7 +32,7 @@ graph TD
 - **`configs/train/`**: 학습 설정 YAML
 - **`configs/inference/`**: 추론 설정 YAML
 - **`src/test_custom.py`**: 추론 스크립트 (config/CLI 지원)
-- **`runs/exp15_train_baseline_yolo11s_2.0/weights/best.pt`**: v15(Exp15) 배포 가중치
+- **`runs/exp15_train_baseline_yolo11s_2.0/weights/best.pt`**: v15(Exp15) 구글드라이브 가중치
 - **`data/raw/sprint_ai_project1_data/`**: 원본 데이터 (train/test images, annotations)
 - **`data/yolo_dataset/`**: 학습에 직접 사용하는 YOLO 포맷 데이터셋
 - **`logs/train/`**: 학습 런타임 로그
@@ -64,8 +64,8 @@ PillaTech_team04/
 │   ├── exp9/
 │   └── exp10/
 ├── configs/                       # 실험 설정 (Reproducibility 핵심)
-│   ├── train/                     # 학습 설정 YAML (exp12_train_*.yaml 등)
-│   └── inference/                 # 추론 설정 YAML (exp12_inference_*.yaml 등)
+│   ├── train/                     # 학습 설정 YAML (exp15_train_*.yaml 등)
+│   └── inference/                 # 추론 설정 YAML (exp15_inference_*.yaml 등)
 ├── data/                          # 데이터 저장소
 │   ├── raw/                       # 원본 이미지/COCO JSON (보존)
 │   │   └── sprint_ai_project1_data/
@@ -79,7 +79,7 @@ PillaTech_team04/
 ├── logs/                          # 실행 로그
 │   └── train/                     # 학습 로그
 ├── runs/                          # 학습 산출물 (weights/plots/args/results)
-│   ├── exp12_train_yolo11s_noflip/
+│   ├── exp12_train_yolo11s_noflip/      # 과거 베이스라인(이력 보존)
 │   ├── exp15_train_baseline_yolo11s_2.0/
 │   └── detect/                    # Ultralytics val 산출물
 ├── metrics/                       # 성능 리포트(JSON)
@@ -117,12 +117,10 @@ pip install -r requirements.txt
 > `requirements.txt`는 `codeit` 가상환경에서 검증된 모든 패키지 버전을 포함하고 있습니다. 환경 차이로 인한 오류를 방지하기 위해 반드시 위 명령어로 설치를 권장합니다.
 
 ### 1-1단계: OS별 실행 기준 (Windows / WSL / Mac)
-- **공식 기준은 Linux 계열 실행환경**입니다.
-- **Windows 사용자는 WSL2(Ubuntu)에서 실행**합니다. 팀 운영상 WSL은 Linux로 간주합니다.
-- **Windows 네이티브(PowerShell/CMD) 실행은 비권장**입니다. 경로/패키지 차이로 재현성 이슈가 커집니다.
-- **Mac은 개발/디버깅/소규모 검증용**으로 사용하고, 최종 학습/제출 산출물은 공식 Linux(또는 WSL2 Ubuntu) 기준으로 확정합니다.
+- **리드미 설명 기준은 Linux 계열 실행환경 입니다.(WSL2는 Linux로 간주합니다.)**
+- **Windows 네이티브(PowerShell/CMD) 실행은 경로/패키지 차이로 재현성 이슈가 커집니다.**
 
-### 2단계: 데이터 준비 (Exp 12 기준)
+### 2단계: 데이터 준비 (공통)
 원본 이미지 데이터를 아래 구조(Folder Structure)에 맞춰 `data/raw/` 폴더에 배치합니다. 
 
 ```text
@@ -141,18 +139,18 @@ python preprocessing.py
 python prepare_yolo_dataset.py
 ```
 
-### 3단계: 학습 시작 (Exp 12 상속)
+### 3단계: 학습 시작 (Exp 15 기준)
 Exp 15 실험을 재현하거나 이를 바탕으로 새 실험을 시작하려면 다음을 참고하세요:
 
 1. **기본 데이터셋**: `data/yolo_dataset/dataset.yaml` 경로를 기본으로 사용합니다. 별도 명시가 없으면 이 경로의 데이터를 불러옵니다.
    ```bash
-   python train_yolo.py --config configs/train/exp12_train_yolo11s_noflip.yaml
+   python train_yolo.py --config configs/train/exp15_train_baseline_yolo11s_2.0.yaml
    ```
 
 2. **커스텀 데이터셋**: 다른 경로의 데이터셋을 사용하고 싶다면 `--data` 옵션으로 명시하면 됩니다.
    ```bash
    # 다른 데이터셋 경로 사용 예시
-   python train_yolo.py --config configs/train/exp12_train_yolo11s_noflip.yaml --data <path/to/dataset.yaml>
+   python train_yolo.py --config configs/train/exp15_train_baseline_yolo11s_2.0.yaml --data <path/to/dataset.yaml>
    ```
 
 ---
@@ -183,58 +181,61 @@ Exp 15 실험을 재현하거나 이를 바탕으로 새 실험을 시작하려�
 - 제출 직전 가중치 경로/파일명이 섞이면 다른 모델이 제출될 수 있습니다.
 
 
-
-
 ---
 ## 💡 가중치 운영 가이드 (Weights Policy)
 Google Drive로 공유받은 가중치는 아래 경로에 그대로 배치하는 것을 권장합니다.
 
 ```bash
-# 예시: Exp 12 베이스라인 가중치 배치
-mkdir -p runs/exp12_train_yolo11s_noflip/weights/
+# 예시: Exp 15 베이스라인 가중치 배치
+mkdir -p runs/exp15_train_baseline_yolo11s_2.0/weights/
 # 이후 best.pt를 위 폴더에 저장
 # (추론 설정 파일의 model 경로와 동일해야 함)
 ```
 
 ### ⚙️ 추론 권장 설정 (Inference Settings)
-Exp 12 베이스라인과 동일한 성능을 재현하려면 추론 시 아래 파라미터를 반드시 준수하거나 '전용 설정'파일을 사용하세요.
+Exp 15 베이스라인과 동일한 성능을 재현하려면 추론 시 아래 파라미터를 반드시 준수하거나 '전용 설정'파일을 사용하세요.
 
-*   **설정 파일**: `configs/inference/exp12_inference_yolo11s_noflip.yaml`
+*   **설정 파일**: `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml`
 *   **해상도 (`imgsz`)**: **960**
 *   **임계값**: `conf: 0.25`, `iou: 0.70`
 *   **전용 설정의 의미**: 여기서 전용 설정은 **추론용 설정 파일**(`configs/inference/...`)을 의미합니다. (`configs/train/...`은 학습용)
 *   **실행 분기**
-    *   가중치가 이미 있으면: `python src/test_custom.py --config configs/inference/exp12_inference_yolo11s_noflip.yaml`
-    *   Exp 12를 처음부터 재현하면: `python train_yolo.py --config configs/train/exp12_train_yolo11s_noflip.yaml` 실행 후 위 추론 명령 실행
-*   **가중치 공유 방법**: `runs/exp12_train_yolo11s_noflip/weights/best.pt`는 Google Drive에 공유되어 있습니다. 4조 팀원분들은 같은 경로에 배치해주세요. (이 경로를 `configs/inference/exp12_inference_yolo11s_noflip.yaml`의 `model`이 참조합니다. `runs/`는 용량 이슈로 보통 Git에 올리지 않습니다.)
+    *   가중치가 이미 있으면: `python src/test_custom.py --config configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml`
+    *   Exp 15를 처음부터 재현하면: `python train_yolo.py --config configs/train/exp15_train_baseline_yolo11s_2.0.yaml` 실행 후 위 추론 명령 실행
+*   **가중치 공유 방법**: `runs/exp15_train_baseline_yolo11s_2.0/weights/best.pt`는 Google Drive에 공유되어 있습니다. 팀원분들은 같은 경로에 배치해주세요. (이 경로를 `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml`의 `model`이 참조합니다. `runs/`는 용량 이슈로 보통 Git에 올리지 않습니다.)
 
 ---
 
 ## 🧭 실험 운영 규칙 (Naming Policy)
 아래 3가지를 일치시켜 실험 계보를 명확히 관리하세요.
 
-| 구분 | Exp12 예시 값 |
+| 구분 | Exp15 예시 값 |
 | --- | --- |
-| 파일명(확장자 제외) | `exp12_train_yolo11s_noflip` |
-| YAML 내 `name` | `exp12_train_yolo11s_noflip` |
-| `runs` 폴더명 | `runs/exp12_train_yolo11s_noflip/` |
+| 파일명(확장자 제외) | `exp15_train_baseline_yolo11s_2.0` |
+| YAML 내 `name` | `exp15_train_baseline_yolo11s_2.0` |
+| `runs` 폴더명 | `runs/exp15_train_baseline_yolo11s_2.0/` |
 
 ---
 
 ## 📈 실험 고도화 가이드 (Next Step)
 현재 팀의 최고 점수는 오염된 데이터가 유입되었을 수도 있는 **Exp 10 (3-Seed Ensemble / Kaggle: 0.98073)** 입니다. 
 
-1.  **설정 상속**: `configs/train/exp12_train_yolo11s_noflip.yaml`을 복사하여 모델 size(`yolo11m`) 혹은 새로운 아키텍처(RT-DETR 등)로 확장하세요.
-2.  **앙상블 전략**: 정제된 Exp 12 가중치를 바탕으로 시드 앙상블 혹은 멀티스케일 추론(`src/ensemble_wbf.py`)을 적용하여 0.99 돌파를 목표로 해봅시다. 
+1.  **설정 상속**: `configs/train/exp15_train_baseline_yolo11s_2.0.yaml`을 복사하여 모델 size(`yolo11m`) 혹은 새로운 아키텍처(RT-DETR 등)로 확장하세요.
+2.  **앙상블 전략**: 정제된 Exp 15 가중치를 바탕으로 시드 앙상블 혹은 멀티스케일 추론(`src/ensemble_wbf.py`)을 적용하여 0.99 돌파를 목표로 해봅시다. 
 
 ---
 
-## 🛠️ 기타 도구 (Optional)
-다음 파일들은 특정 실험 목적(Exp 8, 9 등)을 위해 생성되었으며, 일반적인 Exp 12 학습에는 필수적이지 않습니다. 필요 없을 경우 삭제해도 무방합니다.
+## 🛠️ 기타 (Optional)
+다음 파일들은 특정 실험 목적(Exp 8, 9 등)을 위해 생성되었으며, Exp 15 기본 학습/추론 파이프라인에는 필수는 아닙니다.
 
-- **`src/ensemble_wbf.py`**: 여러 결과 CSV를 WBF로 병합.
-- **`src/eval_csv_map.py`**: CSV 파일을 로컬 라벨과 비교해 mAP 측정.
-- **`src/exp8_search.py`**: 최적의 NMS 임계값(conf, iou) 탐색.
+- `src/ensemble_wbf.py`: 여러 결과 CSV를 WBF로 병합
+- `src/eval_csv_map.py`: CSV를 로컬 라벨과 비교해 mAP 계산
+- `src/exp8_search.py`: validation 기준 NMS(conf/iou) 탐색
+
+선택 실행 스크립트 (scripts/)
+- `scripts/exp9/run_exp9_val.sh`: Exp9 validation 파이프라인 실행
+- `scripts/exp9/run_exp9_test.sh`: Exp9 test 추론 파이프라인 실행
+- `scripts/exp10/run_exp10_ensemble_final.sh`: Exp10 앙상블 파이프라인 실행
 
 ---
 © PillaTech Team 04
