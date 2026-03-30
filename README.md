@@ -6,7 +6,7 @@ PillaTech 4팀의 알약 객체 탐지(Object Detection) 프로젝트입니다.
 
 > [!IMPORTANT]
 > **데이터 무결성 확보 (2026-03-27, 과거 이력)**: 
-> 이전의 **Exp 1~10** 실험 데이터셋에는 9건의 어노테이션 오류가 존재했을수도 있습니다. 팀 협의를 통해 모든 오류를 수정한 **Exp 12**를 당시 2차 베이스라인으로 확정했습니다. (현재 배포 기준은 Exp 15) 상세 내역은 [experiments.md](./experiments.md)를 참고하세요.
+> 이전의 **Exp 1~10** 실험 데이터셋에는 9건의 어노테이션 오류가 존재했을 수도 있습니다. 팀 협의를 통해 모든 오류를 수정한 **Exp 15**를 2차 베이스라인으로 확정했습니다.(exp12에서 실험재현성 로그기록 상세히 추가한 버전)상세 내역은 [experiments.md](./experiments.md)를 참고하세요.
 
 ---
 
@@ -50,7 +50,6 @@ PillaTech_team04/
 ├── preprocessing.py               # 데이터 정제/병합/합성 파이프라인
 ├── prepare_yolo_dataset.py        # YOLO 포맷 데이터셋 구축 스크립트
 ├── train_yolo.py                  # 학습 실행기
-├── scripts/exp10/run_exp10_batch.sh  # (레거시) exp10 실행 스크립트
 ├── src/                           # 추론/앙상블/평가 스크립트
 │   ├── test_custom.py             # 추론 엔진 (config/CLI 지원)
 │   ├── ensemble_wbf.py            # WBF 앙상블
@@ -97,9 +96,11 @@ PillaTech_team04/
 - **`src/test_custom.py`**: CLI 인자와 `configs/inference/`를 지원하는 범용 추론 스크립트.
 
 > [!NOTE]
-> `configs/train/*.yaml`의 `copy_paste`는 **Ultralytics YOLO 내부 증강(augmentation)기법 옵션**입니다. Exp 5에서 사용한 "커스텀 합성 데이터로 데이터셋 자체를 증량(희귀 클래스 증강, Copy Paste)"하는 방식과는 별개이며, Exp5 방식의 (데이터셋 자체 증량)은 YOLO의 copy_paste 파라미터가 아니라, dataset.yaml이 가리키는 실제 학습 데이터 폴더에 합성 결과가 들어가 있느냐로 결정됩니다
+> `configs/train/*.yaml`의 `copy_paste`는 **Ultralytics YOLO 내부 증강 옵션**입니다.  
+> Exp 5에서 사용한 **커스텀 합성(데이터셋 자체 증량)** 방식과는 별개입니다.  
+> 즉, Exp5 방식 적용 여부는 `copy_paste` 값이 아니라, `dataset.yaml`이 참조하는 학습 데이터 폴더에 합성 이미지/라벨이 실제로 포함되어 있는지로 판단합니다.
 
- > `src/test_legacy.py`: (구 `test.py`) 실수 방지 목적으로 예원님 원본 버전 삭제함 
+> `src/test_legacy.py`: (구 `test.py`) 실수 방지 목적으로 예원님 원본 버전 삭제함 
 
 ---
 
@@ -117,8 +118,8 @@ pip install -r requirements.txt
 > `requirements.txt`는 `codeit` 가상환경에서 검증된 모든 패키지 버전을 포함하고 있습니다. 환경 차이로 인한 오류를 방지하기 위해 반드시 위 명령어로 설치를 권장합니다.
 
 ### 1-1단계: OS별 실행 기준 (Windows / WSL / Mac)
-- **리드미 설명 기준은 Linux 계열 실행환경 입니다.(WSL2는 Linux로 간주합니다.)**
-- **Windows 네이티브(PowerShell/CMD) 실행은 경로/패키지 차이로 재현성 이슈가 커집니다.**
+- 리드미 설명 기준은 Linux 계열 실행환경입니다. (WSL2는 Linux로 간주합니다.)
+- Windows 네이티브(PowerShell/CMD) 실행은 경로/패키지 차이로 재현성 이슈가 커집니다.
 
 ### 2단계: 데이터 준비 (공통)
 원본 이미지 데이터를 아래 구조(Folder Structure)에 맞춰 `data/raw/` 폴더에 배치합니다. 
@@ -154,44 +155,20 @@ Exp 15 실험을 재현하거나 이를 바탕으로 새 실험을 시작하려�
    ```
 
 ---
-## 🧪 Kaggle 팀 운영 가이드 (Windows 1, WSL2 1, Mac 2 혼합 환경)
-**“각자 로컬에서 다시 추론해서 제출”**이 아니라 **“공식 컴퓨터에서 생성한 CSV를 제출”**하는 것으로 고정해야 점수 드리프트를 막을 수 있습니다.
-
-### 운영 권장 시나리오
-- **개발/탐색 트랙**: 각자 OS에서 자유롭게 실험 
-- **공식 검증/제출 트랙**: 1대의 공식 컴퓨터에서만 최종 재실행/제출
-- **공식 점수 기준**: Kaggle 제출 CSV는 공식 환경 산출물만 인정
-
-### 시간 제약 대응 (현실적인 운영)
-- 모든 실험을 1명이 돌리지 않습니다.
-- 각자 로컬에서 후보 실험들을 탐색합니다.
-- 상위 후보만 공식 환경에서 재학습/재추론합니다. 
-- 제출은 공식 환경에서 만든 CSV만 사용합니다. 
-
-### 재현성 체크리스트 (최종 후보 필수)
-- `configs/train/*.yaml` (학습 입력값)
-- `configs/inference/*.yaml` (추론 입력값)
-- `metrics/train/*_metrics.json` (학습 결과/적용값)
-- `metrics/infer/*_infer_runtime.json` (추론 실행 환경)
-- `runs/.../weights/best.pt` (가중치)
-- `submission/*.csv` (제출 파일)
-
-### 주의사항
-- 각자 로컬에서 같은 설정으로 다시 추론하면 OS/torch 차이로 CSV가 달라질 수 있습니다. 
-- 제출 직전 가중치 경로/파일명이 섞이면 다른 모델이 제출될 수 있습니다.
-
-
----
 ## 💡 가중치 운영 가이드 (Weights Policy)
-Google Drive로 공유받은 가중치는 아래 경로에 그대로 배치하는 것을 권장합니다.
-https://drive.google.com/drive/folders/1aR9h-X7ZMsv2_x96E2IfMehTS60A5nnc?dmr=1&ec=wgc-drive-%5Bmodule%5D-goto
 
+- Exp 15 베이스라인 가중치(Google Drive): https://drive.google.com/drive/folders/1aR9h-X7ZMsv2_x96E2IfMehTS60A5nnc?dmr=1&ec=wgc-drive-%5Bmodule%5D-goto
+
+- 팀원분들은 가중치를 아래 경로에 동일하게 배치해주세요.
 ```bash
-# 예시: Exp 15 베이스라인 가중치 배치
 mkdir -p runs/exp15_train_baseline_yolo11s_2.0/weights/
-# 이후 best.pt를 위 폴더에 저장
-# (추론 설정 파일의 model 경로와 동일해야 함)
+# best.pt를 위 폴더에 저장
 ```
+
+**기준 파일 경로**
+- `runs/exp15_train_baseline_yolo11s_2.0/weights/best.pt`
+- `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml`의 `model`이 위 경로를 참조합니다.
+- `runs/`는 용량 이슈로 일반적으로 Git에 포함하지 않습니다.
 
 ### ⚙️ 추론 권장 설정 (Inference Settings)
 Exp 15 베이스라인과 동일한 성능을 재현하려면 추론 시 아래 파라미터를 반드시 준수하거나 '전용 설정'파일을 사용하세요.
@@ -203,7 +180,7 @@ Exp 15 베이스라인과 동일한 성능을 재현하려면 추론 시 아래 
 *   **실행 분기**
     *   가중치가 이미 있으면: `python src/test_custom.py --config configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml`
     *   Exp 15를 처음부터 재현하면: `python train_yolo.py --config configs/train/exp15_train_baseline_yolo11s_2.0.yaml` 실행 후 위 추론 명령 실행
-*   **가중치 공유 방법**: `runs/exp15_train_baseline_yolo11s_2.0/weights/best.pt`는 Google Drive에 공유되어 있습니다. 팀원분들은 같은 경로에 배치해주세요. (이 경로를 `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml`의 `model`이 참조합니다. `runs/`는 용량 이슈로 보통 Git에 올리지 않습니다.)
+
 
 ---
 
@@ -233,10 +210,39 @@ Exp 15 베이스라인과 동일한 성능을 재현하려면 추론 시 아래 
 - `src/eval_csv_map.py`: CSV를 로컬 라벨과 비교해 mAP 계산
 - `src/exp8_search.py`: validation 기준 NMS(conf/iou) 탐색
 
-선택 실행 스크립트 (scripts/)
+### 선택 실행 스크립트 (scripts/)
 - `scripts/exp9/run_exp9_val.sh`: Exp9 validation 파이프라인 실행
 - `scripts/exp9/run_exp9_test.sh`: Exp9 test 추론 파이프라인 실행
 - `scripts/exp10/run_exp10_ensemble_final.sh`: Exp10 앙상블 파이프라인 실행
+
+---
+
+## 🧪 Kaggle 팀 운영 권장 가이드 (Windows 1, WSL2 1, Mac 2 혼합 환경)
+각자 로컬에서 추론한 값으로 제출하는 것이 아니라 **“공식 제출 환경(팀 지정 컴퓨터)에서 생성한 CSV를 제출”**하는 것으로 고정해야 점수 드리프트를 막을 수 있습니다.
+
+### 운영 권장 시나리오
+- **개발/탐색 트랙**: 각자 OS에서 자유롭게 실험 
+- **공식 검증/제출 트랙**: 1대의 공식 컴퓨터에서만 최종 재실행/제출
+- **공식 점수 기준**: Kaggle 제출 CSV는 공식 환경 산출물만 인정
+
+### 시간 제약 대응 (현실적인 운영)
+- 모든 실험을 1명이 돌리지 않습니다.
+- 각자 로컬에서 후보 실험들을 탐색합니다.
+- 상위 후보만 공식 환경에서 재학습/재추론합니다. 
+- 제출은 공식 환경에서 만든 CSV만 사용합니다. 
+
+### 재현성 체크리스트 (최종 후보 필수)
+- `configs/train/*.yaml` (학습 입력값)
+- `configs/inference/*.yaml` (추론 입력값)
+- `metrics/train/*_metrics.json` (학습 결과/적용값)
+- `metrics/infer/*_infer_runtime.json` (추론 실행 환경)
+- `runs/.../weights/best.pt` (가중치)
+- `submission/*.csv` (제출 파일)
+
+### 주의사항
+- 각자 로컬에서 같은 설정으로 다시 추론하면 OS/torch 차이로 CSV가 달라질 수 있습니다. 
+- 제출 직전 가중치 경로/파일명이 섞이면 다른 모델이 제출될 수 있습니다.
+
 
 ---
 © PillaTech Team 04
