@@ -53,8 +53,8 @@ git restore --source=pred/yewon train_annotations
 | **Exp 11** | **Dirty-Aug** | Exp 5 Clean (fliplr: 0.5 오설정) | v11s | 960 | 50 | 0 | auto | .25 | .70 | 0.9696 | 0.9696 | 0.9696 | 0.9931 | 0.9950 | 0.9899 | 50 | **[기각]** 변인 통제 실패 (Kaggle: 0.95910) |
 | **Exp 12** | **Cleaned-Base** | **Exp 5 Clean (fliplr: 0.0 복구)** | v11s | 960 | 50 | 0 | auto | .25 | .70 | **0.9740** | **0.9649** | **0.9694** | **0.9946** | **0.9950** | **0.9933** | 50 | **[신뢰 베이스라인 세팅 완료]** (Kaggle: 0.96528) |
 | **Exp 13** | **Baseline-1.0 Rebuild** | 베이스라인 1.0재현 실패(fliplr: 0.0 오설정) | v8n | 640 | 50 | 42 | auto | .25 | .70 | 0.9362 | 0.9887 | 0.9617 | 0.9890 | 0.9950 | 0.9800 | 50 | `metrics/exp_baseline_yolov8n_1.0_val_metrics.json` / Kaggle: **0.94032** |
-| **Exp 14** | **Baseline-2.0 Rebuild** | 베이스라인 2.0 재현(`fliplr: 0.5` 복구) | v8n | 640 | 50 | 42 | auto(→AdamW) | .25 | .70 | 0.9485 | 0.9918 | 0.9697 | 0.9878 | 0.9950 | 0.9717 | 50 | `metrics/exp14_train_baseline_yolov8n_1.0_val_metrics.json` / Kaggle: **0.93808** |
-| **Exp 15** | **Baseline-2.0 Canonical** | Exp12 applied 값(AdamW) 고정 + seed42 기준 배포용 베이스라인 정리 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9704 | 0.9761 | 0.9733 | 0.9918 | 0.9950 | 0.9897 | 50 | `metrics/exp15_train_baseline_yolo11s_2.0_val_metrics.json` / `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml` |
+| **Exp 14** | **Baseline-1.0 Rebuild** | 베이스라인 2.0 재현(`fliplr: 0.5` 복구) | v8n | 640 | 50 | 42 | auto(→AdamW) | .25 | .70 | 0.9485 | 0.9918 | 0.9697 | 0.9878 | 0.9950 | 0.9717 | 50 | `metrics/exp14_train_baseline_yolov8n_1.0_val_metrics.json` / Kaggle: **0.93808** |
+| **Exp 15** | **Baseline-2.0 Canonical** | Exp12 applied 값(AdamW) 고정 + seed42 기준 배포용 베이스라인 정리 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9704 | 0.9761 | 0.9733 | 0.9918 | 0.9950 | 0.9897 | 50 | `metrics/exp15_train_baseline_yolo11s_2.0_val_metrics.json` / `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml` / Kaggle: **0.96455** |
 
 
 ### Exp 예비 (시간 여유 시 진행)
@@ -247,6 +247,8 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   **목적**: Exp12에서 `optimizer=auto`로 요청했을 때 실제 적용된 AdamW 계열 하이퍼파라미터를 명시 고정해, 팀 배포용 베이스라인을 하나로 통일.
 *   **실행 조건**: `optimizer=AdamW`, `lr0=0.000167`, `momentum=0.9`, `warmup_bias_lr=0.0`, `seed=42`, `imgsz=960`, `batch=16`.
 *   **결과**: `Precision=0.9704`, `Recall=0.9761`, `F1=0.9733`, `mAP50=0.9918`, `mAP75=0.9950`, `mAP@50-95=0.9897`.
+*   **Kaggle 재현성 비교**: `exp12=0.96528`, `exp15=0.96455`, 차이 `-0.00073`.
+*   **해석**: `0.00073` 차이는 매우 작은 편으로 실질적으로는 거의 동일 성능대이며, `seed`를 `0 -> 42`로 변경한 만큼 완전 동일 점수가 나오지 않는 것은 정상 범주로 판단.
 *   **명명 정리**: 학습/추론 기준명을 모두 `2.0`으로 통일함.
     *   train: `runs/exp15_train_baseline_yolo11s_2.0`
     *   infer config: `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml`
