@@ -196,8 +196,12 @@
 ---
 <br/>
 
-,,
-"<img src=""./runs/pill_exp_clahe_copy_paste/predict_result_final/1.png"" width=""250"">","<img src=""./runs/pill_exp_clahe_copy_paste/predict_result_final/2.png"" width=""250"">","<img src=""./runs/pill_exp_clahe_copy_paste/predict_result_final/3.png"" width=""250"">"
-Sample 01,Sample 02,Sample 03
-"<img src=""./runs/pill_exp_clahe_copy_paste/predict_result_final/4.png"" width=""250"">","<img src=""./runs/pill_exp_clahe_copy_paste/predict_result_final/5.png"" width=""250"">","<img src=""./runs/pill_exp_clahe_copy_paste/predict_result_final/6.png"" width=""250"">"
-Sample 04,Sample 05,Sample 06
+### 6. 🖼️ Final Prediction Results (Exp9)
+
+| | | |
+| :---: | :---: | :---: |
+| <img src="./runs/pill_exp_clahe_copy_paste/predict_result_final/1.png" width="250"> | <img src="./runs/pill_exp_clahe_copy_paste/predict_result_final/2.png" width="250"> | <img src="./runs/pill_exp_clahe_copy_paste/predict_result_final/3.png" width="250"> |
+| **Sample 01** | **Sample 02** | **Sample 03** |
+| <img src="./runs/pill_exp_clahe_copy_paste/predict_result_final/4.png" width="250"> | <img src="./runs/pill_exp_clahe_copy_paste/predict_result_final/5.png" width="250"> | <img src="./runs/pill_exp_clahe_copy_paste/predict_result_final/6.png" width="250"> |
+| **Sample 04** | **Sample 05** | **Sample 06** |
+
