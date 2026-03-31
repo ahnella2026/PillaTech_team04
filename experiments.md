@@ -52,12 +52,20 @@ git restore --source=pred/yewon train_annotations
 | **Exp 10(F)**| **3-Seed Ens**| Exp 10-1~3 WBF 앙상블 | v11s | 960 | - | 42/123/777 | - | .25 | .60 | **0.9942** | **0.9927** | - | **0.9942** | 0.9942 | **0.9927** | - | - | - | **Kaggle: 0.98073 (현재 최고점!!)** |
 | **Exp 11** | **Dirty-Aug** | Exp 5 Clean (fliplr: 0.5 오설정) | v11s | 960 | 50 | 0 | auto | .25 | .70 | 0.9696 | 0.9696 | 0.9696 | 0.9931 | 0.9950 | 0.9899 | 50 | 13.70 | 0.070 | **[기각]** 변인 통제 실패 (Kaggle: 0.95910) |
 | **Exp 12** | **Cleaned-Base** | **Exp 5 Clean (fliplr: 0.0 복구)** | v11s | 960 | 50 | 0 | auto | .25 | .70 | **0.9740** | **0.9649** | **0.9694** | **0.9946** | **0.9950** | **0.9933** | 50 | 13.40 | 0.072 |  (Kaggle: 0.96528) |
-| **Exp 13** | **Baseline-1.0 Rebuild** | 베이스라인 1.0재현 실패(fliplr: 0.0 오설정) | v8n | 640 | 50 | 42 | auto | .25 | .70 | 0.9362 | 0.9887 | 0.9617 | 0.9890 | 0.9950 | 0.9800 | 50 | 4.36 | 0.216 | `metrics/exp_baseline_yolov8n_1.0_val_metrics.json` / Kaggle: **0.94032** |
-| **Exp 14** | **Baseline-1.0 Rebuild** | 베이스라인 2.0 재현(`fliplr: 0.5` 복구) | v8n | 640 | 50 | 42 | auto(→AdamW) | .25 | .70 | 0.9485 | 0.9918 | 0.9697 | 0.9878 | 0.9950 | 0.9717 | 50 | 4.29 | 0.219 | `metrics/exp14_train_baseline_yolov8n_1.0_val_metrics.json` / Kaggle: **0.93808** |
-| **Exp 15** | **Baseline-2.0 Canonical** | Exp12 applied 값(AdamW) 고정 + seed42 기준 팀원 공유용 베이스라인 정리 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9704 | 0.9761 | 0.9733 | 0.9918 | 0.9950 | 0.9897 | 50 | 14.11 | 0.068 | `metrics/exp15_train_baseline_yolo11s_2.0_val_metrics.json` / `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml` / Kaggle: **0.96455** |
-| **Exp 16** | **Res-640 Sweep** | Exp15 고정값 유지 + 해상도만 `960→640` 변경 (증강 파라미터 동결) | v11s | 640 | 50 | 42 | AdamW | .25 | .70 | 0.9690 | 0.9861 | 0.9774 | 0.9916 | 0.9950 | 0.9892 | 50 | 6.83 | 0.142 | `metrics/exp16_train_yolo11s_res640_val_metrics.json` / `configs/inference/exp16_inference_yolo11s_res640.yaml` / Kaggle: **0.96723** |
-| **Exp 17** | **Res-1024 Sweep** | Exp15 고정값 유지 + 해상도만 `960→1024` 변경 (증강 파라미터 동결) | v11s | 1024 | 50 | 42 | AdamW | .25 | .70 | 0.9692 | 0.9863 | 0.9777 | 0.9929 | 0.9950 | 0.9900 | 50 | 14.90 | 0.065 | `metrics/exp17_train_yolo11s_res1024_val_metrics.json` / `configs/inference/exp17_inference_yolo11s_res1024.yaml` / Kaggle: **0.97292** |
-| **Exp 18** | **Res-1280 Benchmark** | Exp15 고정값 유지 + 해상도만 `960→1280` 변경 (증강 파라미터 동결) | v11s | 1280 | 50 | 42 | AdamW | .25 | .70 | 0.9706* | 0.9634* | 0.9670* | 0.9909* | - | 0.9890* | 50 | 112.21 | - | `runs/exp18_train_yolo11s_res1280/weights/best.pt` / 학습 완료(50ep) 후 final val 단계 OOM(`Killed`)로 metrics json 자동저장 실패 / Kaggle: **TBD** |
+| **Exp 13** | **Baseline-1.0 Rebuild** | 베이스라인 1.0재현 실패(fliplr: 0.0 오설정) | v8n | 640 | 50 | 42 | auto | .25 | .70 | 0.9362 | 0.9887 | 0.9617 | 0.9890 | 0.9950 | 0.9800 | 50 | 4.36 | 0.216 | Kaggle: **0.94032** |
+| **Exp 14** | **Baseline-1.0 Rebuild** | 베이스라인 2.0 재현(`fliplr: 0.5` 복구) | v8n | 640 | 50 | 42 | auto(→AdamW) | .25 | .70 | 0.9485 | 0.9918 | 0.9697 | 0.9878 | 0.9950 | 0.9717 | 50 | 4.29 | 0.219 | Kaggle: **0.93808** |
+| **Exp 15** | **Baseline-2.0 Canonical** | Exp12 applied 값(AdamW) 고정 + seed42 기준 팀원 공유용 베이스라인 정리 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9704 | 0.9761 | 0.9733 | 0.9918 | 0.9950 | 0.9897 | 50 | 14.11 | 0.068 | Kaggle: **0.96455** |
+| **Exp 16** | **Res-640 Sweep** | Exp15 고정값 유지 + 해상도만 `960→640` 변경 (증강 파라미터 동결) | v11s | 640 | 50 | 42 | AdamW | .25 | .70 | 0.9690 | 0.9861 | 0.9774 | 0.9916 | 0.9950 | 0.9892 | 50 | 6.83 | 0.142 | Kaggle: **0.96723** |
+| **Exp 17** | **Res-1024 Sweep** | Exp15 고정값 유지 + 해상도만 `960→1024` 변경 (증강 파라미터 동결) | v11s | 1024 | 50 | 42 | AdamW | .25 | .70 | 0.9692 | 0.9863 | 0.9777 | 0.9929 | 0.9950 | 0.9900 | 50 | 14.90 | 0.065 | Kaggle: **0.97292** |
+| **Exp 18** | **Res-1280 Benchmark** | Exp15 고정값 유지 + 해상도만 `960→1280` 변경 (증강 파라미터 동결) | v11s | 1280 | 50 | 42 | AdamW | .25 | .70 | 0.9706* | 0.9634* | 0.9670* | 0.9909* | - | 0.9890* | 50 | 112.21 | - | final val OOM / inference 완료 / Kaggle: **TBD** |
+| **Exp 19-A** | **No-HSVH** | Exp15 파생 실험: `hsv_h 0.015→0.0` 단일 변수 검증 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9631 | 0.9642 | 0.9636 | 0.9929 | 0.9950 | 0.9920 | 50 | 13.44 | 0.074 | inference 완료 / Kaggle: **TBD** |
+| **Exp 19-B** | **Mosaic-0.5** | Exp15 파생 실험: `mosaic 1.0→0.5` 단일 변수 검증 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9765 | 0.9617 | 0.9690 | 0.9940 | 0.9950 | 0.9920 | 50 | 13.30 | 0.075 | inference 완료 / Kaggle: **TBD** |
+| **Exp 19-C** | **No-Translate** | Exp15 파생 실험: `translate 0.1→0.0` 단일 변수 검증 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9543 | 0.9712 | 0.9626 | 0.9939 | 0.9950 | 0.9909 | 50 | 13.35 | 0.074 | inference 완료 / Kaggle: **TBD** |
+| **Exp 19-D** | **Scale-0.3** | Exp15 파생 실험: `scale 0.5→0.3` 단일 변수 검증 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9710 | 0.9689 | 0.9699 | 0.9909 | 0.9950 | 0.9893 | 50 | 13.35 | 0.074 | inference 완료 / Kaggle: **TBD** |
+| **Exp 20-H1** | **HSVH-0.005** | `hsv_h` 국소 탐색(`0.015→0.005`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9509 | 0.9877 | 0.9690 | 0.9915 | 0.9950 | 0.9895 | 50 | 13.50 | 0.073 | train/inference 완료 / Kaggle: **TBD** |
+| **Exp 20-H2** | **HSVH-0.010** | `hsv_h` 국소 탐색(`0.015→0.010`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9655 | 0.9649 | 0.9652 | 0.9934 | 0.9950 | 0.9915 | 50 | 13.28 | 0.075 | train/inference 완료 / Kaggle: **TBD** |
+| **Exp 20-H3** | **HSVH-0.020** | `hsv_h` 상한 가드레일 검증(`0.015→0.020`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9709 | 0.9667 | 0.9688 | 0.9935 | 0.9950 | 0.9919 | 50 | 13.35 | 0.074 | train/inference 완료 / Kaggle: **TBD** |
+| **Exp 20-H4** | **HSVH-0.030** | `hsv_h` 상한 가드레일 검증(`0.015→0.030`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9656 | 0.9625 | 0.9641 | 0.9936 | 0.9950 | 0.9886 | 50 | 13.38 | 0.074 | train/inference 완료 / Kaggle: **TBD** |
 
 > `*` Exp18의 P/R/F1/mAP는 `results.csv`의 50epoch 행 값 기준(학습 중 val 로그)이며, `train_yolo.py`의 final `model.val()` 결과값은 OOM 종료로 미기록.
 
@@ -287,8 +295,66 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   **학습 시간**: `results.csv` 누적 시간 기준 `6732.89s` (`112.21m`).
 *   **지표 기록 주의**: 학습 종료 직후 실행된 final `model.val()` 단계에서 OOM으로 프로세스가 `Killed`되어 `metrics/exp18_..._val_metrics.json` 자동 저장은 실패.
 *   **임시 지표(`results.csv` 50epoch 행)**: `Precision=0.97062`, `Recall=0.96341`, `mAP50=0.99085`, `mAP@50-95=0.98902`.
-*   **산출물**: `runs/exp18_train_yolo11s_res1280/weights/best.pt`, `configs/inference/exp18_inference_yolo11s_res1280.yaml`
+*   **산출물**: `runs/exp18_train_yolo11s_res1280/weights/best.pt`, `configs/inference/exp18_inference_yolo11s_res1280.yaml`, `submission/exp18_yolo11s_res1280.csv`
+*   **추론 실행 상태**: inference 완료(`metrics/infer/exp18_yolo11s_res1280_infer_runtime.json` 생성 확인).
 *   **Kaggle 결과**: **TBD** (추후 업데이트 예정)
+
+### [Exp 19-A] No-HSVH Ablation (YOLO11s, 960px)
+*   **목적**: Exp15/기본증강 기반에서 `hsv_h` 민감도를 단일 변수로 확인 (`0.015 → 0.0`).
+*   **실행 조건**: `optimizer=AdamW`, `seed=42`, `imgsz=960`, `batch=16`, `hsv_h=0.0`, 그 외 Exp15/기본값 유지.
+*   **결과**: `Precision=0.9631`, `Recall=0.9642`, `F1=0.9636`, `mAP50=0.9929`, `mAP75=0.9950`, `mAP@50-95=0.9920`.
+*   **학습 시간**: `806.449s` (`13.44m`).
+*   **산출물**: `runs/exp19A_train_yolo11s_res960_no_hsvh/weights/best.pt`, `submission/exp19A_yolo11s_res960_no_hsvh.csv`
+*   **근거 파일**: `metrics/exp19A_train_yolo11s_res960_no_hsvh_val_metrics.json`, `metrics/infer/exp19A_yolo11s_res960_no_hsvh_infer_runtime.json`
+*   **Kaggle 결과**: **TBD**
+
+### [Exp 19-B] Mosaic 0.5 Ablation (YOLO11s, 960px)
+*   **목적**: `mosaic` 강도를 절반으로 낮췄을 때(`1.0 → 0.5`) 정밀도/재현율 트레이드오프 확인.
+*   **실행 조건**: `optimizer=AdamW`, `seed=42`, `imgsz=960`, `batch=16`, `mosaic=0.5`, 나머지 조건 유지.
+*   **결과**: `Precision=0.9765`, `Recall=0.9617`, `F1=0.9690`, `mAP50=0.9940`, `mAP75=0.9950`, `mAP@50-95=0.9920`.
+*   **학습 시간**: `797.952s` (`13.30m`).
+*   **산출물**: `runs/exp19B_train_yolo11s_res960_mosaic05/weights/best.pt`, `submission/exp19B_yolo11s_res960_mosaic05.csv`
+*   **근거 파일**: `metrics/exp19B_train_yolo11s_res960_mosaic05_val_metrics.json`, `metrics/infer/exp19B_yolo11s_res960_mosaic05_infer_runtime.json`
+*   **Kaggle 결과**: **TBD**
+
+### [Exp 19-C] No-Translate Ablation (YOLO11s, 960px)
+*   **목적**: `translate` 제거 효과를 단일 변수로 검증 (`0.1 → 0.0`).
+*   **실행 조건**: `optimizer=AdamW`, `seed=42`, `imgsz=960`, `batch=16`, `translate=0.0`, 그 외 동일.
+*   **결과**: `Precision=0.9543`, `Recall=0.9712`, `F1=0.9626`, `mAP50=0.9939`, `mAP75=0.9950`, `mAP@50-95=0.9909`.
+*   **학습 시간**: `800.844s` (`13.35m`).
+*   **산출물**: `runs/exp19C_train_yolo11s_res960_no_translate/weights/best.pt`, `submission/exp19C_yolo11s_res960_no_translate.csv`
+*   **근거 파일**: `metrics/exp19C_train_yolo11s_res960_no_translate_val_metrics.json`, `metrics/infer/exp19C_yolo11s_res960_no_translate_infer_runtime.json`
+*   **Kaggle 결과**: **TBD**
+
+### [Exp 19-D] Scale 0.3 Ablation (YOLO11s, 960px)
+*   **목적**: `scale` 범위를 축소했을 때(`0.5 → 0.3`) 박스 정밀도 변화 확인.
+*   **실행 조건**: `optimizer=AdamW`, `seed=42`, `imgsz=960`, `batch=16`, `scale=0.3`, 나머지 조건 동일.
+*   **결과**: `Precision=0.9710`, `Recall=0.9689`, `F1=0.9699`, `mAP50=0.9909`, `mAP75=0.9950`, `mAP@50-95=0.9893`.
+*   **학습 시간**: `800.743s` (`13.35m`).
+*   **산출물**: `runs/exp19D_train_yolo11s_res960_scale03/weights/best.pt`, `submission/exp19D_yolo11s_res960_scale03.csv`
+*   **근거 파일**: `metrics/exp19D_train_yolo11s_res960_scale03_val_metrics.json`, `metrics/infer/exp19D_yolo11s_res960_scale03_infer_runtime.json`
+*   **Kaggle 결과**: **TBD**
+
+### [Exp 20-H Sweep] HSVH Fine-Grained Search (YOLO11s, 960px)
+*   **목적**: Exp19-A(`hsv_h=0.0`) 결과를 바탕으로 `hsv_h` 민감도를 미세 탐색하고, `0.015` 초과 구간의 상한 가드레일까지 확인.
+*   **실행 조건**: `optimizer=AdamW`, `seed=42`, `imgsz=960`, `batch=16`, 고정값(`mosaic=1.0`, `translate=0.1`, `scale=0.5`) 유지 후 `hsv_h`만 변경.
+*   **실험값**: `H1=0.005`, `H2=0.010`, `H3=0.020`, `H4=0.030`.
+*   **결과 요약**:
+    *   `H3 (hsv_h=0.020)`가 Local `mAP@50-95=0.9919`로 최고.
+    *   `H2 (0.010)`도 `mAP@50-95=0.9915`로 강한 후보.
+    *   `H4 (0.030)`는 `mAP@50-95=0.9886`로 하락해 과도한 hue 변형 리스크 신호 확인.
+*   **학습 시간**: 4개 모두 `13.28~13.50m` 범위.
+*   **산출물**: `runs/exp20H*_train_yolo11s_res960_hsvh0*/weights/best.pt` (H1~H4)
+*   **근거 파일**:
+    *   `metrics/exp20H1_train_yolo11s_res960_hsvh005_val_metrics.json`
+    *   `metrics/exp20H2_train_yolo11s_res960_hsvh010_val_metrics.json`
+    *   `metrics/exp20H3_train_yolo11s_res960_hsvh020_val_metrics.json`
+    *   `metrics/exp20H4_train_yolo11s_res960_hsvh030_val_metrics.json`
+    *   `metrics/infer/exp20H1_yolo11s_res960_hsvh005_infer_runtime.json`
+    *   `metrics/infer/exp20H2_yolo11s_res960_hsvh010_infer_runtime.json`
+    *   `metrics/infer/exp20H3_yolo11s_res960_hsvh020_infer_runtime.json`
+    *   `metrics/infer/exp20H4_yolo11s_res960_hsvh030_infer_runtime.json`
+*   **추론/캐글 상태**: inference는 완료, Kaggle 제출은 `TBD`.
 
 
 
