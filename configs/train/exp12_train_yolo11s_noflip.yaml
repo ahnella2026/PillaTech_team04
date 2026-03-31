@@ -5,7 +5,7 @@
 name: "exp12_train_yolo11s_noflip"
 model: "yolo11s.pt"
 epochs: 50
-imgsz: 960
+imgsz: 640
 batch: 16
 
 # Augmentation (Exp 5와 100% 일치 필수)
@@ -21,4 +21,4 @@ seed: 0
 deterministic: true
 
 # Device
-device: "0"
+device: mps

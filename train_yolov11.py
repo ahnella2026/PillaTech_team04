@@ -22,6 +22,7 @@ from ultralytics import YOLO
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_DATA_YAML_LEGACY = PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
+DEFAULT_DATA_YAML_FINAL = PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
 DEFAULT_DATA_YAML_CLEANED = (
     PROJECT_ROOT / "data" / "yolo_cleaned" / "seed_777" / "dataset.yaml"
 )
@@ -40,10 +41,14 @@ def get_device() -> str:
 
 
 def find_default_dataset_yaml() -> Path:
+    # ⭐ 1순위: CLAHE + Copy-Paste가 모두 반영된 최종 데이터셋
+    if DEFAULT_DATA_YAML_FINAL.exists():
+        print(f"✅ Using final augmented dataset: {DEFAULT_DATA_YAML_FINAL}")
+        return DEFAULT_DATA_YAML_FINAL
+    
+    # 2순위: 기존 Cleaned 데이터셋
     if DEFAULT_DATA_YAML_CLEANED.exists():
         return DEFAULT_DATA_YAML_CLEANED
-    if DEFAULT_DATA_YAML_LEGACY.exists():
-        return DEFAULT_DATA_YAML_LEGACY
 
     candidates = sorted(PROJECT_ROOT.glob("data/**/dataset.yaml"))
     hint = ""
@@ -106,7 +111,7 @@ def build_parser(defaults: dict) -> argparse.ArgumentParser:
     parser.add_argument(
         "--name",
         type=str,
-        default=defaults.get("name", "pill_exp2_yolo11s"),
+        default=defaults.get("name", "pill_exp_clahe_copy_paste"),
         help="experiment name",
     )
     # 수정함.

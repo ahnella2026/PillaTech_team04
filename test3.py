@@ -11,9 +11,9 @@ from tqdm import tqdm
 
 def run_test_and_save_csv():
     # 1. 경로 설정
-    MODEL_PATH = '/Users/yewon/Desktop/코드잇 스프린트/project/project1/runs/exp8_yolo11s_clahe3/weights/best.pt'
+    MODEL_PATH = '/Users/yewon/Desktop/코드잇 스프린트/project/project1/runs/pill_exp_clahe_copy_paste/weights/best.pt'
     TEST_IMG_DIR = '/Users/yewon/Desktop/코드잇 스프린트/project/project1/data/raw/sprint_ai_project1_data/test_images' 
-    OUTPUT_CSV = 'Yewon_v5_yolov11s_CLAHE.csv'
+    OUTPUT_CSV = 'Yewon_v6_yolo11s_CLAHE_CopyPaste.csv'
     YAML_PATH = '/Users/yewon/Desktop/코드잇 스프린트/project/project1/data/yolo_dataset/dataset.yaml'
     JSON_DIR = '/Users/yewon/Desktop/코드잇 스프린트/project/project1/data/raw/sprint_ai_project1_data/train_annotations' 
 
@@ -73,13 +73,16 @@ def run_test_and_save_csv():
         img = cv2.imread(img_path)
         if img is None: continue
         
-        yuv = cv2.cvtColor(img, cv2.COLOR_BGR2YUV)
-        yuv[:,:,0] = clahe.apply(yuv[:,:,0])
-        clahe_img = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR)
+        # --- [수정] 학습 때와 동일한 LAB 기반 CLAHE 적용 ---
+        lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+        l_clahe = clahe.apply(l)
+        lab_clahe = cv2.merge((l_clahe, a, b))
+        clahe_img = cv2.cvtColor(lab_clahe, cv2.COLOR_LAB2BGR)
         # -------------------------------
 
         # 파일 경로 대신 변환된 이미지 배열(clahe_img)을 직접 입력
-        outputs = model.predict(source=clahe_img, conf=0.25, imgsz=640, device='mps', verbose=False)
+        outputs = model.predict(source=clahe_img, conf=0.1, imgsz=640, device='mps', verbose=False)
         
         for r in outputs:
             boxes = r.boxes

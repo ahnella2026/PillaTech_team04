@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import shutil
+import os
+import cv2
+import numpy as np
+import re
+from collections import Counter
 from pathlib import Path
 import json
-import shutil
+import random
 from typing import Any
 
 
@@ -181,31 +187,38 @@ def main() -> None:
 
     images_dict: dict[str, Any] = merged["images"]
 
-    # =========================
-    # Train (oversampling 적용)
-    # =========================
-    from collections import defaultdict
+    # [추가] CLAHE 처리된 이미지들의 기본 경로
+    CLAHE_ROOT = PROJECT_ROOT / "data" / "yolo_cleaned" / "seed_777"
+    CLAHE_TRAIN_DIR = CLAHE_ROOT / "train" / "images"
+    CLAHE_VAL_DIR = CLAHE_ROOT / "val" / "images"
 
-    counter = defaultdict(int)
-
+    # =========================
+    # Train (Copy-Paste 및 경로 분기 대응)
+    # =========================
+    print(f"🚀 Preparing Train dataset: {len(train_images)} images")
     for image_name in train_images:
-        counter[image_name] += 1
-        count = counter[image_name]
-
+        if image_name not in images_dict:
+            continue
+            
         image_info = images_dict[image_name]
-
-        src_img = TRAIN_IMG_DIR / image_name
-
-        # 파일명 생성 (중복이면 _dup 붙이기)
-        if count == 1:
-            new_image_name = image_name
+        
+        # 🟢 [핵심 수정] 파일명에 따른 소스 경로 분기
+        if image_name.startswith("aug_"):
+            # 증강된 이미지는 PROCESSED_DIR / "augmented_images"에서 찾음
+            src_img = AUGMENTED_IMG_DIR / image_name
         else:
-            stem = Path(image_name).stem
-            suffix = Path(image_name).suffix
-            new_image_name = f"{stem}_dup{count-1}{suffix}"
+            # 원본 이미지는 RAW_DATA_DIR / "train_images"에서 찾음
+            src_img = CLAHE_TRAIN_DIR / image_name
+            # 만약 CLAHE 폴더에 없다면 원본 raw 폴더에서 (보험용)
+            if not src_img.exists():
+                src_img = TRAIN_IMG_DIR / image_name
 
-        dst_img = YOLO_IMAGES_TRAIN / new_image_name
-        dst_label = YOLO_LABELS_TRAIN / f"{Path(new_image_name).stem}.txt"
+        dst_img = YOLO_IMAGES_TRAIN / image_name
+        dst_label = YOLO_LABELS_TRAIN / f"{Path(image_name).stem}.txt"
+
+        if not src_img.exists():
+            print(f"❌ Error: File not found -> {src_img}")
+            continue
 
         copy_image(src_img, dst_img)
         write_label_file(image_info, label_map, dst_label)
@@ -213,12 +226,21 @@ def main() -> None:
     # =========================
     # Validation (그대로 유지)
     # =========================
+    print(f"🚀 Preparing Val dataset: {len(val_images)} images")
     for image_name in val_images:
         image_info = images_dict[image_name]
 
-        src_img = TRAIN_IMG_DIR / image_name
+        # 🟢 [수정] 평가 데이터도 CLAHE 버전이 있다면 그것을 우선 사용해야 합니다.
+        src_img = CLAHE_VAL_DIR / image_name
+        if not src_img.exists():
+            src_img = TRAIN_IMG_DIR / image_name
+            
         dst_img = YOLO_IMAGES_VAL / image_name
         dst_label = YOLO_LABELS_VAL / f"{Path(image_name).stem}.txt"
+
+        if not src_img.exists():
+            print(f"❌ Error: Val Image not found -> {image_name}")
+            continue
 
         copy_image(src_img, dst_img)
         write_label_file(image_info, label_map, dst_label)

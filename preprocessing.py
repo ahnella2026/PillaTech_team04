@@ -1,16 +1,24 @@
 from __future__ import annotations
 
+import os
+import cv2
+import numpy as np
+import re
 from collections import Counter
 from pathlib import Path
 import json
 import random
 from typing import Any
 
+# =========================
+# Settings
+# =========================
 SEED = 42
 VAL_RATIO = 0.2
-RARE_CLASS_THRESHOLD = 5  # 객체 개수가 5개 이하인 클래스를 rare class로 간주
-OVERSAMPLE_RARE_IMAGES = True
-RARE_IMAGE_DUPLICATION_FACTOR = 2  # rare class 포함 이미지를 총 몇 번 포함할지
+RARE_CLASS_THRESHOLD = 5
+# 기존 OVERSAMPLE 관련 변수를 COPY_PASTE 변수로 대체
+APPLY_COPY_PASTE = True 
+TARGET_INSTANCES_PER_CLASS = 20  # 각 희귀 클래스당 목표 인스턴스 개수
 
 random.seed(SEED)
 
@@ -25,6 +33,10 @@ TRAIN_ANN_DIR = RAW_DATA_DIR / "train_annotations"
 
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+
+# [추가] 증강된 이미지가 저장될 폴더 (train_images와 같은 레벨 혹은 별도 폴더)
+AUGMENTED_IMG_DIR = PROCESSED_DIR / "augmented_images"
+AUGMENTED_IMG_DIR.mkdir(parents=True, exist_ok=True)
 
 MERGED_ANNOTATIONS_PATH = PROCESSED_DIR / "merged_annotations.json"
 LABEL_MAP_PATH = PROCESSED_DIR / "label_map.json"
@@ -409,35 +421,124 @@ def summarize_split(
         "objects_per_image_distribution": dict(sorted(num_objects_per_image.items())),
     }
 
+
 # =========================
-# Step 7. rare class oversampling
+# Step 7. Copy-Paste Augmentation (신규 추가)
 # =========================
 
-def oversample_rare_class_images(
-    train_images: list[str],
-    image_meta: list[dict[str, Any]],
-    duplication_factor: int = 2,
-) -> list[str]:
+def apply_copy_paste_augmentation(
+    train_image_names: list[str],
+    merged: dict[str, dict[str, Any]],
+    rare_classes: set[str],
+    target_count: int = 20,
+) -> dict[str, dict[str, Any]]:
     """
-    train_images 중 rare class 포함 이미지를 duplication_factor 만큼 반복해서
-    oversampled train image list를 반환
+    희귀 클래스에 대해 Copy-Paste 증강을 수행하고 새 이미지와 어노테이션을 생성합니다.
     """
-    if duplication_factor < 2:
-        return sorted(train_images)
+    print(f"[7] Starting Copy-Paste augmentation (Target: {target_count} instances per rare class)")
 
-    meta_map = {item["image_name"]: item for item in image_meta}
+    def sanitize_filename(text: str) -> str:
+        cleaned = re.sub(r"[^0-9A-Za-z가-힣._-]+", "_", text)
+        return cleaned.strip("_") or "unknown"
+    
+    # 1. Pill Bank 구축
+    pill_bank: dict[str, list[dict[str, Any]]] = {cls: [] for cls in rare_classes}
+    
+    for img_name in train_image_names:
+        img_info = merged[img_name]
+        img_path = PROJECT_ROOT / "data" / "yolo_cleaned" / "seed_777" / "train" / "images"
+        
+        if not img_path.exists(): 
+            img_path = TRAIN_IMG_DIR / img_name
+        
+        img = cv2.imread(str(img_path))
+        if img is None: continue
+        
+        for obj in img_info["objects"]:
+            if obj["label"] in rare_classes:
+                x, y, w, h = map(int, obj["bbox"])
+                # 이미지 경계를 벗어나지 않도록 클리핑
+                h_img, w_img = img.shape[:2]
+                x, y = max(0, x), max(0, y)
+                w, h = min(w, w_img - x), min(h, h_img - y)
+                
+                if w <= 0 or h <= 0: continue
+                
+                crop = img[y:y+h, x:x+w].copy()
+                pill_bank[obj["label"]].append({
+                    "image": crop,
+                    "label": obj["label"],
+                    "category_id": obj["category_id"],
+                    "original_size": (w, h)
+                })
 
-    oversampled_train_images: list[str] = []
-
-    for image_name in train_images:
-        oversampled_train_images.append(image_name)
-
-        has_rare_class = meta_map[image_name]["has_rare_class"]
-        if has_rare_class:
-            for _ in range(duplication_factor - 1):
-                oversampled_train_images.append(image_name)
-
-    return sorted(oversampled_train_images)
+    # 2. 증강 이미지 생성
+    augmented_annots: dict[str, dict[str, Any]] = {}
+    bg_color = (211, 211, 211) # 연회색 배경
+    
+    # 모든 희귀 클래스의 크롭 데이터를 합친 리스트 (배경용 무작위 선택용)
+    all_pill_bank_values = [item for sublist in pill_bank.values() for item in sublist]
+    
+    for cls_name, crops in pill_bank.items():
+        if not crops: continue
+        
+        current_count = len(crops)
+        needed = target_count - current_count
+        if needed <= 0: continue
+        
+        print(f"    - Augmenting {cls_name}: {current_count} -> {target_count}")
+        
+        for i in range(needed):
+            aug_img = np.full((1280, 976, 3), bg_color, dtype=np.uint8)
+            aug_objects = []
+            
+            num_pills = random.randint(2, 4)
+            for p_idx in range(num_pills):
+                # 첫 번째는 타겟 클래스, 나머지는 전체 희귀 뱅크에서 무작위
+                selected_crop_info = random.choice(crops) if p_idx == 0 else random.choice(all_pill_bank_values)
+                
+                pill_img = selected_crop_info["image"]
+                
+                # 크기 조절 및 회전
+                scale = random.uniform(0.8, 1.2)
+                new_w = int(pill_img.shape[1] * scale)
+                new_h = int(pill_img.shape[0] * scale)
+                pill_img = cv2.resize(pill_img, (new_w, new_h))
+                
+                center = (new_w // 2, new_h // 2)
+                matrix = cv2.getRotationMatrix2D(center, random.uniform(0, 360), 1.0)
+                pill_img = cv2.warpAffine(pill_img, matrix, (new_w, new_h), borderValue=bg_color)
+                
+                # 위치 선정
+                max_y, max_x = aug_img.shape[0] - new_h, aug_img.shape[1] - new_w
+                if max_x <= 50 or max_y <= 50: continue
+                
+                start_x = random.randint(50, max_x - 50)
+                start_y = random.randint(50, max_y - 50)
+                
+                aug_img[start_y:start_y+new_h, start_x:start_x+new_w] = pill_img
+                
+                aug_objects.append({
+                    "bbox": [float(start_x), float(start_y), float(new_w), float(new_h)],
+                    "label": selected_crop_info["label"],
+                    "category_id": selected_crop_info["category_id"],
+                    "source_json": "augmented"
+                })
+            
+            safe_cls = sanitize_filename(cls_name)
+            aug_name = f"aug_{safe_cls}_{i}.png"
+            out_path = AUGMENTED_IMG_DIR / aug_name
+            cv2.imwrite(str(out_path), aug_img)
+            
+            augmented_annots[aug_name] = {
+                "image_name": aug_name,
+                "width": 976,
+                "height": 1280,
+                "objects": aug_objects,
+                "is_augmented": True
+            }
+            
+    return augmented_annots
 
 # =========================
 # Main
@@ -494,17 +595,28 @@ def main() -> None:
     print(f"    - train images: {len(train_images)}")
     print(f"    - val images  : {len(val_images)}")
 
-    if OVERSAMPLE_RARE_IMAGES:
-        train_images = oversample_rare_class_images(
-            train_images=train_images,
-            image_meta=image_meta,
-            duplication_factor=RARE_IMAGE_DUPLICATION_FACTOR,
+    
+    # Step 7 수정: Oversampling 대신 Copy-Paste 적용
+    if APPLY_COPY_PASTE:
+        # 1. 증강 수행 및 새 어노테이션 획득
+        augmented_data = apply_copy_paste_augmentation(
+            train_image_names=train_images,
+            merged=merged,
+            rare_classes=rare_classes,
+            target_count=TARGET_INSTANCES_PER_CLASS
         )
-        print(f"[7] Applied rare class image oversampling")
-        print(f"    - train images (after oversampling): {len(train_images)}")
-
+        
+        # 2. merged 딕셔너리에 증강 데이터 합치기
+        merged.update(augmented_data)
+        
+        # 3. train_images 리스트에 증강된 이미지 이름 추가
+        train_images.extend(list(augmented_data.keys()))
+        
+        print(f"[7] Applied Copy-Paste augmentation")
+        print(f"    - Added {len(augmented_data)} new images")
+        print(f"    - Total train images: {len(train_images)}")
     else:
-        print(f"[7] Rare class image oversampling skipped")
+        print(f"[7] Augmentation skipped")
 
     train_summary = summarize_split(train_images, merged)
     val_summary = summarize_split(val_images, merged)
