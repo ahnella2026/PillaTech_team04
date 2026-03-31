@@ -58,14 +58,20 @@ git restore --source=pred/yewon train_annotations
 | **Exp 16** | **Res-640 Sweep** | Exp15 고정값 유지 + 해상도만 `960→640` 변경 (증강 파라미터 동결) | v11s | 640 | 50 | 42 | AdamW | .25 | .70 | 0.9690 | 0.9861 | 0.9774 | 0.9916 | 0.9950 | 0.9892 | 50 | 6.83 | 0.142 | Kaggle: **0.96723** |
 | **Exp 17** | **Res-1024 Sweep** | Exp15 고정값 유지 + 해상도만 `960→1024` 변경 (증강 파라미터 동결) | v11s | 1024 | 50 | 42 | AdamW | .25 | .70 | 0.9692 | 0.9863 | 0.9777 | 0.9929 | 0.9950 | 0.9900 | 50 | 14.90 | 0.065 | Kaggle: **0.97292** |
 | **Exp 18** | **Res-1280 Benchmark** | Exp15 고정값 유지 + 해상도만 `960→1280` 변경 (증강 파라미터 동결) | v11s | 1280 | 50 | 42 | AdamW | .25 | .70 | 0.9706* | 0.9634* | 0.9670* | 0.9909* | - | 0.9890* | 50 | 112.21 | - | final val OOM / inference 완료 / Kaggle: **TBD** |
-| **Exp 19-A** | **No-HSVH** | Exp15 파생 실험: `hsv_h 0.015→0.0` 단일 변수 검증 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9631 | 0.9642 | 0.9636 | 0.9929 | 0.9950 | 0.9920 | 50 | 13.44 | 0.074 | inference 완료 / Kaggle: **TBD** |
+| **Exp 19-A** | **No-HSVH** | Exp15 파생 실험: `hsv_h 0.015→0.0` 단일 변수 검증 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9631 | 0.9642 | 0.9636 | 0.9929 | 0.9950 | 0.9920 | 50 | 13.44 | 0.074 | inference 완료 / Kaggle: **0.96678** |
 | **Exp 19-B** | **Mosaic-0.5** | Exp15 파생 실험: `mosaic 1.0→0.5` 단일 변수 검증 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9765 | 0.9617 | 0.9690 | 0.9940 | 0.9950 | 0.9920 | 50 | 13.30 | 0.075 | inference 완료 / Kaggle: **TBD** |
 | **Exp 19-C** | **No-Translate** | Exp15 파생 실험: `translate 0.1→0.0` 단일 변수 검증 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9543 | 0.9712 | 0.9626 | 0.9939 | 0.9950 | 0.9909 | 50 | 13.35 | 0.074 | inference 완료 / Kaggle: **TBD** |
 | **Exp 19-D** | **Scale-0.3** | Exp15 파생 실험: `scale 0.5→0.3` 단일 변수 검증 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9710 | 0.9689 | 0.9699 | 0.9909 | 0.9950 | 0.9893 | 50 | 13.35 | 0.074 | inference 완료 / Kaggle: **TBD** |
 | **Exp 20-H1** | **HSVH-0.005** | `hsv_h` 국소 탐색(`0.015→0.005`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9509 | 0.9877 | 0.9690 | 0.9915 | 0.9950 | 0.9895 | 50 | 13.50 | 0.073 | train/inference 완료 / Kaggle: **TBD** |
-| **Exp 20-H2** | **HSVH-0.010** | `hsv_h` 국소 탐색(`0.015→0.010`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9655 | 0.9649 | 0.9652 | 0.9934 | 0.9950 | 0.9915 | 50 | 13.28 | 0.075 | train/inference 완료 / Kaggle: **TBD** |
-| **Exp 20-H3** | **HSVH-0.020** | `hsv_h` 상한 가드레일 검증(`0.015→0.020`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9709 | 0.9667 | 0.9688 | 0.9935 | 0.9950 | 0.9919 | 50 | 13.35 | 0.074 | train/inference 완료 / Kaggle: **TBD** |
+| **Exp 20-H2** | **HSVH-0.010** | `hsv_h` 국소 탐색(`0.015→0.010`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9655 | 0.9649 | 0.9652 | 0.9934 | 0.9950 | 0.9915 | 50 | 13.28 | 0.075 | train/inference 완료 / Kaggle: **보류(로컬 기준 후보)** |
+| **Exp 20-H3** | **HSVH-0.020** | `hsv_h` 상한 가드레일 검증(`0.015→0.020`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9709 | 0.9667 | 0.9688 | 0.9935 | 0.9950 | 0.9919 | 50 | 13.35 | 0.074 | train/inference 완료 / Kaggle: **0.97154** |
 | **Exp 20-H4** | **HSVH-0.030** | `hsv_h` 상한 가드레일 검증(`0.015→0.030`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9656 | 0.9625 | 0.9641 | 0.9936 | 0.9950 | 0.9886 | 50 | 13.38 | 0.074 | train/inference 완료 / Kaggle: **TBD** |
+| **Exp 20-H5** | **HSVH-0.018** | `hsv_h` 피크 구간 좌측 미세탐색(`0.015→0.018`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9722 | 0.9606 | 0.9664 | 0.9927 | 0.9950 | 0.9911 | 50 | 14.02 | 0.071 | train 완료 / inference 대기 / Kaggle: **TBD** |
+| **Exp 20-H6** | **HSVH-0.022** | `hsv_h` 피크 구간 우측 미세탐색(`0.015→0.022`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9694 | 0.9669 | 0.9682 | 0.9919 | 0.9950 | 0.9901 | 50 | 14.02 | 0.071 | train 완료 / inference 대기 / Kaggle: **TBD** |
+| **Exp 20-H7** | **HSVH-0.025** | `hsv_h` 상한 구간 미세탐색(`0.015→0.025`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9726 | 0.9749 | 0.9738 | 0.9934 | 0.9950 | 0.9911 | 50 | 13.89 | 0.072 | train 완료 / inference 대기 / Kaggle: **TBD** |
+| **Exp 21-M0** | **Mosaic-0.0** | `mosaic` 경계값 검증(`1.0→0.0`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9659 | 0.9707 | 0.9683 | 0.9945 | 0.9950 | 0.9916 | 50 | 13.85 | 0.072 | train/inference 완료 / Kaggle: **0.96894** |
+| **Exp 21-M1** | **Mosaic-0.4** | `mosaic` 국소 탐색(`0.5→0.4`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9727 | 0.9622 | 0.9674 | 0.9918 | 0.9950 | 0.9897 | 50 | 14.11 | 0.071 | train 완료 / inference 대기 / Kaggle: **TBD** |
+| **Exp 21-M2** | **Mosaic-0.6** | `mosaic` 국소 탐색(`0.5→0.6`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9747 | 0.9648 | 0.9697 | 0.9939 | 0.9950 | 0.9920 | 50 | 13.69 | 0.073 | train/inference 완료 / Kaggle: **0.96154** |
 
 > `*` Exp18의 P/R/F1/mAP는 `results.csv`의 50epoch 행 값 기준(학습 중 val 로그)이며, `train_yolo.py`의 final `model.val()` 결과값은 OOM 종료로 미기록.
 
@@ -117,15 +123,18 @@ Exp 7(1024px 리사이즈) 실험 이후, 훈련 비용이 큰 모델 업그레�
 
 ### [Exp 0] Baseline (YOLOv8n / 640px)
 *   **분석**: mAP가 0.959라는 비정상적인 결과 도출. 이는 유사도가 높은 사진들이 학습/검증 셋에 골고루 섞여 검증 데이터가 유출된 **Data Leakage(데이터 누수)** 현상임.
+*   **통찰**: 초기 단계에서 높은 Local 점수는 성능 향상 신호가 아니라 분할 전략 오류 신호일 수 있으며, 본 프로젝트에서는 이 구간 점수를 의사결정 기준에서 제외해야 함.
 *   **교훈**: 랜덤 분할은 지표를 지나치게 낙관적으로 만들며, 실제 대회(Kaggle: 0.701) 성적과 극심한 괴리를 발생시킴을 확인.
 
 ### [Exp 1] Stratified Split (YOLOv8n / 640px / 20ep)
 *   **분석**: 640px 해상도에서 랜덤 분할 대비 지표가 0.402로 급감함. 이는 희귀 클래스들이 검증 데이터셋에 정직하게 포함되면서 나타나는 "정상적인 지표 하락" 현상임.
+*   **통찰**: 지표 하락 자체가 실패가 아니라, 데이터 분포를 현실에 가깝게 만든 정상화 과정이며 이후 실험의 기준선 신뢰도를 회복하는 단계였음.
 *   **결정**: 0.402를 기준점으로 잡고 다음 실험 진행.
 
 ### [Exp 1-2] Stratified Split (YOLOv8n / 640px / 50ep)
 *   **현상**: 640px 환경에서 50 Epoch까지 학습 시 mAP50이 다시 0.96까지 상승함.
 *   **분석**: 계층적 분할을 하더라도 **동일 세션에서 촬영된 이미지들 간의 높은 유사성(Session Similarity)** 때문에 모델이 검증 셋을 '쉽게' 맞추는 경향이 여전히 존재함.
+*   **통찰**: 분할 전략 개선만으로는 세션 유사도 문제를 해결할 수 없고, 일반화 향상을 위해서는 데이터 다양성 증강(합성/도메인 변주) 개입이 필수임이 확인됨.
 *   **한계**: 단순히 데이터를 나누는 것(Split Strategy)만으로는 데이터 불균형과 리큐지 문제를 완벽히 해결할 수 없음을 시사함.
 *   **결정**: 모델의 일반화 성능(Generalization) 및 강건성(Robustness) 향상을 위한 Copy-Paste 증강 기법 도입이 절대적으로 필요함.
 
@@ -245,6 +254,7 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   **현상**: YOLOv8n + 640 + 50epoch + seed42 + YOLO 기본증강 일부 배제(플립 OFF) 조건으로 Baseline 1.0을 재현했을 때, Kaggle Public Score **0.94032**를 기록함.
 *   **결과**: 로컬 `validation` 기준 `mAP50=0.9890`, `mAP75=0.9950`, `mAP@50-95=0.9800`.
 *   **해석**: 초기 Baseline 점수(0.70166) 대비 큰 상승은 yolo 기본 증강인 flip을 꺼서 그런 거 같아서 exp14에서는 default값인 0.5로 켜서 실험하기로 결정함 
+*   **통찰**: Baseline 재현 단계에서 설정 차이(특히 flip 계열) 하나만으로도 결과가 크게 흔들릴 수 있어, 이후 실험은 YAML 기준 설정 고정/추적이 필수임.
 *   **근거 파일**: `metrics/exp_baseline_yolov8n_1.0_val_metrics.json`, `submission/exp13_baseline_yolov8n_1.0.csv`
 
 ### [Exp 14] Baseline-1.0 Rebuild (YOLOv8n, Flip Restore)
@@ -252,6 +262,7 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   **결과**: 로컬 `validation` 기준 `Precision=0.9485`, `Recall=0.9918`, `F1=0.9697`, `mAP50=0.9878`, `mAP75=0.9950`, `mAP@50-95=0.9717`.
 *   **옵티마이저 기록**: `optimizer_requested=auto`, `optimizer_resolved=AdamW` 확인.
 *   **해석**: Exp13 대비 Recall은 상승했지만 `mAP@50-95`가 하락해, flip 복구가 정밀 localization에는 불리하게 작용했을 가능성이 있음.
+*   **통찰**: 본 도메인(각인/방향 민감)에서는 일반적인 좌우반전 증강이 항상 유효하지 않으며, 클래스 특성 기반으로 증강 선택이 필요함.
 *   **Kaggle 결과**: Public Score **0.93808**
 *   **근거 파일**: `metrics/exp14_train_baseline_yolov8n_1.0_val_metrics.json`, `submission/exp14_baseline_yolov8n_1.0.csv`
 *   **후속 액션**: 초기 0.7점대 제출을 기록한 팀원에게 당시 학습/추론 설정 YAML 원본 공유 요청 필요하나 당시 상황에서는 이런 부분을 생각하지 못하고 기록을 안했기 때문에, 모든 팀원이 동일한 환경으로 베이스라인 1.0 재현 불가
@@ -263,6 +274,7 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   **학습 시간**: `results.csv` 누적 시간 기준 `846.882s` (`14.11m`).
 *   **Kaggle 재현성 비교**: `exp12=0.96528`, `exp15=0.96455`, 차이 `-0.00073`.
 *   **해석**: `0.00073` 차이는 매우 작은 편으로 실질적으로는 거의 동일 성능대이며, `seed`를 `0 -> 42`로 변경한 만큼 완전 동일 점수가 나오지 않는 것은 정상 범주로 판단.
+*   **통찰**: Exp15는 최고점 실험이 아니라 팀 공통 기준선(재현 가능한 기준점) 역할을 수행하며, 이후 단일변수 실험의 기준 anchor로 적합함.
 *   **명명 정리**: 학습/추론 기준명을 모두 `2.0`으로 통일함.
     *   train: `runs/exp15_train_baseline_yolo11s_2.0`
     *   infer config: `configs/inference/exp15_inference_baseline_yolo11s_2.0.yaml`
@@ -275,6 +287,7 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   **학습 시간**: `results.csv` 누적 시간 기준 `409.986s` (`6.83m`).
 *   **Kaggle 결과**: Public Score **0.96723** (`vs Exp15 +0.00268`).
 *   **해석**: Local `mAP@50-95`는 Exp15 대비 소폭 하락(`0.9897 → 0.9892`)했지만 Kaggle은 상승해, 실전 일반화 관점에서는 640 설정이 유리하게 작동함.
+*   **통찰**: 해상도 증대가 항상 일반화 개선으로 이어지지 않으며, 본 데이터셋에서는 계산비용 대비 640도 경쟁력 있는 운영 옵션임이 확인됨.
 *   **산출물**: `runs/exp16_train_yolo11s_res640/weights/best.pt`, `submission/exp16_yolo11s_res640.csv`
 *   **근거 파일**: `metrics/exp16_train_yolo11s_res640_val_metrics.json`, `configs/inference/exp16_inference_yolo11s_res640.yaml`
 
@@ -285,6 +298,7 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   **학습 시간**: `results.csv` 누적 시간 기준 `894.107s` (`14.90m`).
 *   **Kaggle 결과**: Public Score **0.97292** (`vs Exp15 +0.00837`, `vs Exp16 +0.00569`).
 *   **해석**: Local/Kaggle 모두 Exp16 대비 우세하며, 현재 단일 모델 해상도 비교군(640/960/1024)에서는 `1024`가 가장 강한 선택지.
+*   **통찰**: 본 프로젝트의 단일 모델 상위권 성능은 1024 해상도에서 안정적으로 확보되며, 960은 탐색 비용 절감을 위한 실험 트랙으로 운용하는 것이 타당함.
 *   **산출물**: `runs/exp17_train_yolo11s_res1024/weights/best.pt`, `submission/exp17_yolo11s_res1024.csv`
 *   **근거 파일**: `metrics/exp17_train_yolo11s_res1024_val_metrics.json`, `configs/inference/exp17_inference_yolo11s_res1024.yaml`
 
@@ -298,6 +312,7 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   **산출물**: `runs/exp18_train_yolo11s_res1280/weights/best.pt`, `configs/inference/exp18_inference_yolo11s_res1280.yaml`, `submission/exp18_yolo11s_res1280.csv`
 *   **추론 실행 상태**: inference 완료(`metrics/infer/exp18_yolo11s_res1280_infer_runtime.json` 생성 확인).
 *   **Kaggle 결과**: **TBD** (추후 업데이트 예정)
+*   **통찰**: 1280은 잠재 성능보다 운영 리스크(OOM/시간비용)가 커서, 현 로컬 자원에서는 상시 실험 트랙이 아니라 최종 검증용 제한 트랙으로 분리하는 것이 합리적임.
 
 ### [Exp 19-A] No-HSVH Ablation (YOLO11s, 960px)
 *   **목적**: Exp15/기본증강 기반에서 `hsv_h` 민감도를 단일 변수로 확인 (`0.015 → 0.0`).
@@ -306,7 +321,8 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   **학습 시간**: `806.449s` (`13.44m`).
 *   **산출물**: `runs/exp19A_train_yolo11s_res960_no_hsvh/weights/best.pt`, `submission/exp19A_yolo11s_res960_no_hsvh.csv`
 *   **근거 파일**: `metrics/exp19A_train_yolo11s_res960_no_hsvh_val_metrics.json`, `metrics/infer/exp19A_yolo11s_res960_no_hsvh_infer_runtime.json`
-*   **Kaggle 결과**: **TBD**
+*   **Kaggle 결과**: **0.96678** (`vs Exp15 +0.00223`)
+*   **통찰**: hue 변형을 완전히 제거해도 성능이 유지/개선되어, 기본 `hsv_h=0.015`가 본 데이터 분포에는 과한 변동일 가능성을 열어줌.
 
 ### [Exp 19-B] Mosaic 0.5 Ablation (YOLO11s, 960px)
 *   **목적**: `mosaic` 강도를 절반으로 낮췄을 때(`1.0 → 0.5`) 정밀도/재현율 트레이드오프 확인.
@@ -316,6 +332,7 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   **산출물**: `runs/exp19B_train_yolo11s_res960_mosaic05/weights/best.pt`, `submission/exp19B_yolo11s_res960_mosaic05.csv`
 *   **근거 파일**: `metrics/exp19B_train_yolo11s_res960_mosaic05_val_metrics.json`, `metrics/infer/exp19B_yolo11s_res960_mosaic05_infer_runtime.json`
 *   **Kaggle 결과**: **TBD**
+*   **통찰**: Local 기준 개선 신호가 분명해 Mosaic 강도는 고정값(1.0)보다 하향 탐색이 유망하며, 후속 M-sweep 실험의 근거로 채택됨.
 
 ### [Exp 19-C] No-Translate Ablation (YOLO11s, 960px)
 *   **목적**: `translate` 제거 효과를 단일 변수로 검증 (`0.1 → 0.0`).
@@ -325,6 +342,7 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   **산출물**: `runs/exp19C_train_yolo11s_res960_no_translate/weights/best.pt`, `submission/exp19C_yolo11s_res960_no_translate.csv`
 *   **근거 파일**: `metrics/exp19C_train_yolo11s_res960_no_translate_val_metrics.json`, `metrics/infer/exp19C_yolo11s_res960_no_translate_infer_runtime.json`
 *   **Kaggle 결과**: **TBD**
+*   **통찰**: `translate` 제거 시 mAP는 소폭 개선되지만 F1 하락이 동반되어, 단독 채택보다 후순위 후보(조합 검증 전 대기)로 두는 것이 리스크 관리에 유리함.
 
 ### [Exp 19-D] Scale 0.3 Ablation (YOLO11s, 960px)
 *   **목적**: `scale` 범위를 축소했을 때(`0.5 → 0.3`) 박스 정밀도 변화 확인.
@@ -334,27 +352,70 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   **산출물**: `runs/exp19D_train_yolo11s_res960_scale03/weights/best.pt`, `submission/exp19D_yolo11s_res960_scale03.csv`
 *   **근거 파일**: `metrics/exp19D_train_yolo11s_res960_scale03_val_metrics.json`, `metrics/infer/exp19D_yolo11s_res960_scale03_infer_runtime.json`
 *   **Kaggle 결과**: **TBD**
+*   **통찰**: `scale` 축소는 Local 기준 성능 저하가 확인되어, 현 파이프라인에서는 독성 변수로 분류하고 추가 탐색 우선순위에서 제외함.
 
 ### [Exp 20-H Sweep] HSVH Fine-Grained Search (YOLO11s, 960px)
 *   **목적**: Exp19-A(`hsv_h=0.0`) 결과를 바탕으로 `hsv_h` 민감도를 미세 탐색하고, `0.015` 초과 구간의 상한 가드레일까지 확인.
 *   **실행 조건**: `optimizer=AdamW`, `seed=42`, `imgsz=960`, `batch=16`, 고정값(`mosaic=1.0`, `translate=0.1`, `scale=0.5`) 유지 후 `hsv_h`만 변경.
-*   **실험값**: `H1=0.005`, `H2=0.010`, `H3=0.020`, `H4=0.030`.
+*   **실험값**: `H1=0.005`, `H2=0.010`, `H3=0.020`, `H4=0.030`, `H5=0.018`, `H6=0.022`, `H7=0.025`.
 *   **결과 요약**:
     *   `H3 (hsv_h=0.020)`가 Local `mAP@50-95=0.9919`로 최고.
     *   `H2 (0.010)`도 `mAP@50-95=0.9915`로 강한 후보.
+    *   `H5 (0.018)`와 `H7 (0.025)`는 각각 `0.9911`로 근접했지만 `H3/H2`를 넘지 못함.
+    *   `H6 (0.022)`는 `0.9901`로 피크 구간 우측에서 하락 신호를 보임.
     *   `H4 (0.030)`는 `mAP@50-95=0.9886`로 하락해 과도한 hue 변형 리스크 신호 확인.
-*   **학습 시간**: 4개 모두 `13.28~13.50m` 범위.
-*   **산출물**: `runs/exp20H*_train_yolo11s_res960_hsvh0*/weights/best.pt` (H1~H4)
+*   **학습 시간**: `13.28~14.02m` 범위.
+*   **산출물**: `runs/exp20H*_train_yolo11s_res960_hsvh0*/weights/best.pt` (H1~H7)
 *   **근거 파일**:
     *   `metrics/exp20H1_train_yolo11s_res960_hsvh005_val_metrics.json`
     *   `metrics/exp20H2_train_yolo11s_res960_hsvh010_val_metrics.json`
     *   `metrics/exp20H3_train_yolo11s_res960_hsvh020_val_metrics.json`
     *   `metrics/exp20H4_train_yolo11s_res960_hsvh030_val_metrics.json`
+    *   `metrics/exp20H5_train_yolo11s_res960_hsvh018_val_metrics.json`
+    *   `metrics/exp20H6_train_yolo11s_res960_hsvh022_val_metrics.json`
+    *   `metrics/exp20H7_train_yolo11s_res960_hsvh025_val_metrics.json`
     *   `metrics/infer/exp20H1_yolo11s_res960_hsvh005_infer_runtime.json`
     *   `metrics/infer/exp20H2_yolo11s_res960_hsvh010_infer_runtime.json`
     *   `metrics/infer/exp20H3_yolo11s_res960_hsvh020_infer_runtime.json`
     *   `metrics/infer/exp20H4_yolo11s_res960_hsvh030_infer_runtime.json`
-*   **추론/캐글 상태**: inference는 완료, Kaggle 제출은 `TBD`.
+*   **추론/캐글 상태**: `H1~H4` inference 완료, `H5~H7`은 train 완료/inference 대기.
+*   **Kaggle 업데이트(2026-03-31)**:
+    *   `H3 (hsv_h=0.020)`: **0.97154** (`vs Exp15 +0.00699`, `vs 19-A +0.00476`)
+    *   `H2 (hsv_h=0.010)`: 제출 보류(로컬 기준 후보 유지, 제출 슬롯 여유 시 검증)
+*   **통찰**:
+    *   `hsv_h` 효과는 단조 증가가 아니며, `0.020` 부근에서 국소 최적점이 형성됨.
+    *   `0.018~0.025` 구간은 모두 상위권이지만, 추가 미세탐색의 이득 폭은 `~0.001` 내외로 작음.
+    *   즉, Exp20 추가 실험의 의미는 "최고점 갱신"보다 "`hsv_h` 민감도 곡선과 안전 구간 확인"에 있음.
+*   **결론**: Kaggle 기준으로도 `H3(0.020)`가 `H-best`로 확정되었다. `H2`는 로컬 후보로만 유지하고, 다음 단계는 `Exp21(mosaic)`에서 `M-best`를 선별한 뒤 `Exp23(H-best+M-best)` 조합 검증으로 전환한다.
+
+### [Exp 21-M Sweep] Mosaic Fine-Grained Search (YOLO11s, 960px)
+*   **실험 가설**: `mosaic=0.5`에서 개선 신호가 있었으므로, `0.5` 근방(`0.4/0.6`)과 경계값(`0.0`)에서 추가 개선 또는 안정 구간이 확인될 수 있다.
+*   **가설 설정 이유**: `mosaic`은 소형 객체의 경계 절단/배경 혼합 강도에 직접 영향하여 과소/과대 설정 시 성능 저하 위험이 있다. 따라서 `0.5` 근처 국소 탐색이 필요했다.
+*   **실행 조건**: `optimizer=AdamW`, `seed=42`, `imgsz=960`, `batch=16`, 고정값(`hsv_h=0.015`, `translate=0.1`, `scale=0.5`) 유지 후 `mosaic`만 변경.
+*   **실험값**: `M0=0.0`, `M1=0.4`, `M2=0.6`.
+*   **결과 요약**:
+    *   Local에서는 `M2 (mosaic=0.6)`가 `mAP@50-95=0.9920`로 최고.
+    *   Kaggle에서는 `M0 (mosaic=0.0)=0.96894`가 `M2 (0.96154)`보다 크게 우세.
+    *   즉 `mosaic`은 Local 우열과 Kaggle 우열이 역전되었고, 최종 선택은 Kaggle 기준으로 해야 한다.
+*   **통찰**:
+    *   본 실험군에서는 강한 합성(`mosaic` 상향)이 Local 지표를 상승시켜 실전 일반화를 악화시킬 수 있어, 최종 채택 기준은 Kaggle 성능으로 고정해야 한다.
+*   **점수 변화 원인 분석(가설 기반)**:
+    *   `0.4`는 합성 강도가 낮아져 데이터 다양성 이득이 제한적이었을 가능성.
+    *   `0.0`은 인위적 합성 왜곡을 제거해 박스 정밀도에 유리할 수 있으나, 일부 다양성 이득은 상실했을 가능성.
+    *   `0.6`은 과도한 절단을 피하면서도 다양성을 충분히 확보해 일반화에 가장 유리했을 가능성.
+*   **학습 시간**: `M0=13.85m`, `M1=14.11m`, `M2=13.69m`.
+*   **근거 파일**:
+    *   `metrics/exp21M0_train_yolo11s_res960_mosaic00_val_metrics.json`
+    *   `metrics/exp21M1_train_yolo11s_res960_mosaic04_val_metrics.json`
+    *   `metrics/exp21M2_train_yolo11s_res960_mosaic06_val_metrics.json`
+*   **추론/캐글 상태**:
+    *   `M0`: inference 완료 / Kaggle **0.96894**
+    *   `M2`: inference 완료 / Kaggle **0.96154**
+    *   `M1`: train 완료 / Kaggle 미제출
+*   **결론(업데이트)**:
+    *   `Exp15 baseline(0.96455)` 대비 `M0`는 `+0.00439`, `M2`는 `-0.00301`.
+    *   현재 mosaic 단일변수 기준 `M-best`는 `M0 (mosaic=0.0)`로 재지정한다.
+    *   실험 방향은 `M1` 1회 검증 여부만 결정한 뒤, 조합 단계는 `H3+M0` 우선으로 진행한다.
 
 
 

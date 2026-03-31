@@ -620,6 +620,41 @@ def main() -> None:
     precision = val_results.results_dict.get('metrics/precision(B)', 0.0)
     recall = val_results.results_dict.get('metrics/recall(B)', 0.0)
     runtime_env = collect_runtime_env(args.device)
+
+    # Model footprint metadata (for deployment/reporting)
+    model_size_mb = None
+    best_ckpt_file = Path(best_ckpt_path)
+    if best_ckpt_file.exists():
+        model_size_mb = best_ckpt_file.stat().st_size / (1024.0 * 1024.0)
+
+    total_params = None
+    trainable_params = None
+    model_module = getattr(model, "model", None)
+    if model_module is not None:
+        try:
+            total_params = int(sum(p.numel() for p in model_module.parameters()))
+            trainable_params = int(sum(p.numel() for p in model_module.parameters() if p.requires_grad))
+        except Exception:
+            total_params = None
+            trainable_params = None
+
+    # Per-class AP50-95 from validation (optional; useful for class-wise error analysis)
+    per_class_ap50_95 = {}
+    val_maps = getattr(val_results, "maps", None)
+    val_names = getattr(val_results, "names", None)
+    if val_maps is not None and len(val_maps) > 0:
+        idx_to_name = {}
+        if isinstance(val_names, dict):
+            for k, v in val_names.items():
+                try:
+                    idx_to_name[int(k)] = str(v)
+                except Exception:
+                    continue
+        elif isinstance(val_names, (list, tuple)):
+            idx_to_name = {i: str(v) for i, v in enumerate(val_names)}
+        for i, ap in enumerate(val_maps):
+            cls_name = idx_to_name.get(i, f"class_{i}")
+            per_class_ap50_95[cls_name] = float(ap)
     
     f1_score = 0.0
     if precision + recall > 0:
@@ -648,6 +683,9 @@ def main() -> None:
         "epoch": int(args.epochs),
         "imgsz": int(args.imgsz),
         "batch": int(args.batch),
+        "model_size_mb": float(model_size_mb) if model_size_mb is not None else None,
+        "model_params_total": total_params,
+        "model_params_trainable": trainable_params,
         "best_epoch": int(getattr(val_results, "epoch", args.epochs)),
         "train_results_csv": train_time_stats["train_results_csv"],
         "train_completed_epochs": int(train_time_stats["train_completed_epochs"]),
@@ -660,6 +698,7 @@ def main() -> None:
         "mAP50": float(map50),
         "mAP75": float(map75),
         "mAP50-95": float(map50_95),
+        "per_class_ap50_95": per_class_ap50_95,
     }
     METRICS_DIR.mkdir(parents=True, exist_ok=True)
     metrics_path = METRICS_DIR / f"{args.name}_val_metrics.json"
@@ -682,6 +721,10 @@ def main() -> None:
     print(f" ➡️  mAP@50:    {map50:.4f}")
     print(f" ➡️  mAP@75:    {map75:.4f}")
     print(f" ➡️  mAP@50-95: {map50_95:.4f}")
+    if model_size_mb is not None:
+        print(f" ➡️  model size: {model_size_mb:.2f} MB")
+    if total_params is not None:
+        print(f" ➡️  params:     {total_params:,} (trainable {trainable_params:,})")
     if train_time_stats["train_time_seconds"] is not None:
         print(
             " ➡️  train time:"

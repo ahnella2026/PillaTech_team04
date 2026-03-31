@@ -9,7 +9,7 @@ patience: 100
 amp: true
 close_mosaic: 10
 
-# Optimization (Exp15 baseline과 동일)
+# Optimization (Exp15 baseline2.0과 동일)
 optimizer: "AdamW"
 lr0: 0.000167
 lrf: 0.01

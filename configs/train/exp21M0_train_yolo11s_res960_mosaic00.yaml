@@ -1,4 +1,4 @@
-name: "exp21M2_train_yolo11s_res960_mosaic06"
+name: "exp21M0_train_yolo11s_res960_mosaic00"
 model: "yolo11s.pt"
 data: "data/yolo_dataset/dataset.yaml"
 epochs: 50
@@ -23,7 +23,7 @@ pretrained: true
 resume: false
 
 # Augmentation
-# [변경 변수] mosaic: 1.0 -> 0.6
+# [변경 변수] mosaic: 1.0 -> 0.0
 hsv_h: 0.015
 hsv_s: 0.7
 hsv_v: 0.4
@@ -34,7 +34,7 @@ perspective: 0.0
 fliplr: 0.0
 flipud: 0.0
 degrees: 0.0
-mosaic: 0.6
+mosaic: 0.0
 copy_paste: 0.0
 mixup: 0.0
 erasing: 0.4

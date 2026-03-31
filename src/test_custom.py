@@ -16,6 +16,7 @@ import yaml
 import json
 import difflib 
 import sys
+import time
 from ultralytics import YOLO
 from pathlib import Path
 
@@ -26,7 +27,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
 from src.utils.logging_utils import start_run_logging
-from src.utils.metrics_utils import collect_runtime_env, write_metrics_json
+from src.utils.metrics_utils import collect_runtime_env, percentile_ms, write_metrics_json
 
 DEFAULT_TEST_IMG_DIR = PROJECT_ROOT / "data" / "raw" / "sprint_ai_project1_data" / "test_images"
 DEFAULT_YAML_PATH = PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
@@ -39,17 +40,45 @@ def save_infer_runtime_metadata(
     model_path: str,
     output_csv: str,
     device: str = "0",
+    imgsz: int | None = None,
+    conf: float | None = None,
+    iou: float | None = None,
+    num_images: int | None = None,
+    num_predictions: int | None = None,
+    infer_latency_sec: list[float] | None = None,
+    infer_loop_seconds: float | None = None,
+    total_wall_seconds: float | None = None,
 ) -> Path:
     """
     추론 실행 환경 메타데이터를 저장한다.
     실무 재현성 추적용으로 train_yolo.py와 동일한 환경 필드를 기록한다.
     """
     runtime_env = collect_runtime_env(device)
+    latency_sec = infer_latency_sec or []
+    total_infer_sec = float(sum(latency_sec)) if latency_sec else None
+    avg_latency_ms = (total_infer_sec * 1000.0 / len(latency_sec)) if latency_sec else None
+    fps = (len(latency_sec) / total_infer_sec) if latency_sec and total_infer_sec and total_infer_sec > 0 else None
+
     payload = {
         "run_name": run_name,
         "timestamp": datetime.datetime.now().isoformat(),
         "model_path": str(model_path),
         "output_csv": str(Path(output_csv).resolve()),
+        "imgsz": int(imgsz) if imgsz is not None else None,
+        "conf": float(conf) if conf is not None else None,
+        "iou": float(iou) if iou is not None else None,
+        "num_images": int(num_images) if num_images is not None else None,
+        "num_predictions": int(num_predictions) if num_predictions is not None else None,
+        # Standardized inference runtime naming
+        "model_inference_time_seconds": total_infer_sec,
+        "end_to_end_inference_time_seconds": float(infer_loop_seconds) if infer_loop_seconds is not None else None,
+        "wall_clock_time_seconds": float(total_wall_seconds) if total_wall_seconds is not None else None,
+        "latency_mean_ms": float(avg_latency_ms) if avg_latency_ms is not None else None,
+        "latency_p50_ms": percentile_ms(latency_sec, 50),
+        "latency_p90_ms": percentile_ms(latency_sec, 90),
+        "latency_p95_ms": percentile_ms(latency_sec, 95),
+        "latency_p99_ms": percentile_ms(latency_sec, 99),
+        "throughput_fps": float(fps) if fps is not None else None,
         "os_platform": runtime_env.get("os_platform"),
         "python_version": runtime_env.get("python_version"),
         "torch_version": runtime_env.get("torch_version"),
@@ -153,6 +182,7 @@ def run_test_and_save_csv():
     4. 결과를 Kaggle 양식의 CSV로 저장
     """
     cli_args = parse_args()
+    total_start = time.perf_counter()
     
     # --- Config Loading Logic --- #
     if cli_args.config:
@@ -249,6 +279,8 @@ def run_test_and_save_csv():
     ann_id_counter = 1 
 
     print(f" 총 {len(image_files)}장의 이미지에 대해 검출을 시작합니다.")
+    infer_loop_start = time.perf_counter()
+    infer_latency_sec: list[float] = []
     for idx, img_name in enumerate(image_files):
         if idx % 100 == 0:
             print(f"   - Processing image {idx}/{len(image_files)}...")
@@ -257,7 +289,9 @@ def run_test_and_save_csv():
         image_id_str = "".join(re.findall(r'\d+', img_name))
         image_id = int(image_id_str) if image_id_str else 0
             
+        t0 = time.perf_counter()
         outputs = model.predict(source=img_path, conf=cli_args.conf, iou=cli_args.iou, imgsz=cli_args.imgsz, verbose=False)
+        infer_latency_sec.append(time.perf_counter() - t0)
         
         for r in outputs:
             boxes = r.boxes
@@ -282,12 +316,22 @@ def run_test_and_save_csv():
     df = pd.DataFrame(results_list)
     df.to_csv(OUTPUT_CSV, index=False)
     print(f"\n✅ 분석 완료! 파일 저장됨: {os.path.abspath(OUTPUT_CSV)}")
+    infer_loop_seconds = time.perf_counter() - infer_loop_start
+    total_wall_seconds = time.perf_counter() - total_start
 
     runtime_meta_path = save_infer_runtime_metadata(
         run_name=run_name,
         model_path=MODEL_PATH,
         output_csv=OUTPUT_CSV,
         device=str(getattr(cli_args, "device", "0")),
+        imgsz=cli_args.imgsz,
+        conf=cli_args.conf,
+        iou=cli_args.iou,
+        num_images=len(image_files),
+        num_predictions=len(results_list),
+        infer_latency_sec=infer_latency_sec,
+        infer_loop_seconds=infer_loop_seconds,
+        total_wall_seconds=total_wall_seconds,
     )
     print(f"📊 추론 런타임 메타 저장됨: {runtime_meta_path}")
     
