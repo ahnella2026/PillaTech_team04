@@ -79,6 +79,10 @@ git restore --source=pred/yewon train_annotations
 | **Exp 24-V1** | **HSVV-0.0** | `Exp22-H3M0` 고정 + `hsv_v 0.4→0.0` | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9749 | 0.9641 | 0.9695 | 0.9935 | 0.9950 | 0.9906 | 50 | 13.52 | - | train 완료 / inference 대기 / Kaggle: **TBD** |
 | **Exp 24-V2** | **HSVV-0.2** | `Exp22-H3M0` 고정 + `hsv_v 0.4→0.2` | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9559 | 0.9854 | 0.9704 | 0.9943 | 0.9950 | **0.9928** | 50 | 13.33 | - | train/inference 완료 / Kaggle: **0.96308** |
 | **Exp 24-V3** | **HSVV-0.5** | `Exp22-H3M0` 고정 + `hsv_v 0.4→0.5` | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9600 | 0.9818 | **0.9708** | 0.9945 | 0.9950 | 0.9922 | 50 | 13.42 | - | train 완료 / inference 대기 / Kaggle: **TBD** |
+| **Exp 25-LB1** | **LossGain-Box** | `Exp22-H3M0` 고정 + `box 7.5→8.5` 단일 변수 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9730 | 0.9632 | 0.9681 | 0.9932 | 0.9950 | 0.9919 | 50 | 14.04 | - | train/inference 완료 / Kaggle: **TBD** |
+| **Exp 25-LD1** | **LossGain-DFL** | `Exp22-H3M0` 고정 + `dfl 1.5→2.0` 단일 변수 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9787 | 0.9599 | 0.9692 | 0.9944 | 0.9950 | **0.9920** | 50 | 13.89 | - | train/inference 완료 / Kaggle: **TBD** |
+| **Exp 25-LBD1** | **LossGain-Box+DFL** | `Exp22-H3M0` 고정 + `(box,dfl)=(8.5,2.0)` 조합 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9741 | **0.9856** | **0.9798** | 0.9941 | 0.9950 | **0.9923** | 50 | 13.84 | - | train/inference 완료 / Kaggle: **제출 완료(Exp22 대비 하락, 수치 입력 대기)** |
+| **Exp 26** | **Exp22 Multi-scale WBF** | `Exp22-H3M0 best.pt` 단일 가중치로 `640/960/1024` 추론 후 WBF(`WBF IoU=0.70`) | v11s | Mix | - | 42(Exp22 기반) | - | .25 | .70 | - | - | - | - | - | - | - | - | - | inference 완료 / Kaggle: **0.97345** (**vs Exp22 +0.00146**) |
 
 > `*` Exp18의 P/R/F1/mAP는 `results.csv`의 50epoch 행 값 기준(학습 중 val 로그)이며, `train_yolo.py`의 final `model.val()` 결과값은 OOM 종료로 미기록.
 
@@ -199,6 +203,7 @@ Exp 7(1024px 리사이즈) 실험 이후, 훈련 비용이 큰 모델 업그레�
 ### [Exp 9] Multi-Scale WBF (다중 해상도 앙상블)
 *   **배경**: 원래 계획했던 Snapshot 앙상블은 과거 epoch 가중치가 남아 있지 않아 진행 불가. 따라서 추가 학습 없이도 앙상블 효과를 노릴 수 있는 `Multi-scale WBF`로 전략을 전환함.
 *   **방식**: Exp5의 최종 가중치 `runs/pill_exp5_yolo11s_copypaste/weights/best.pt` 하나를 사용해 `640 / 960 / 1024` 세 해상도로 각각 추론한 뒤, 생성된 CSV를 WBF로 병합함.
+*   **실험 통제 원칙(Exp22 재현 실험 적용)**: `Exp22-H3M0` 기반 WBF 효과 비교 시, 기준 추론 설정과 동일하게 **NMS IoU=0.7**, **WBF IoU=0.7**로 고정해 변수 통제를 유지함.
 *   **실행 결과**: 개별 추론 결과 3개(`exp9_submission_640.csv`, `exp9_submission_960.csv`, `exp9_submission_1024.csv`)를 생성했고, WBF 적용 후 최종 제출 파일 `submission/exp9_final_wbf.csv`를 생성함. 이후 `validation` 기준 재평가를 별도로 수행하여 로컬 mAP 지표를 기록함.
 *   **로컬 검증 결과**: `metrics/exp9_val_metrics.json` 기준 `mAP50=0.9932`, `mAP@50-95=0.9896`, `mAP@75=0.9932`.
 *   **통찰**: 재학습 없이 단일 가중치의 다중 해상도 예측을 WBF로 병합하는 방식만으로도, 로컬 `validation` 기준 높은 성능을 유지하면서 Kaggle Public Score **0.97243**까지 도달함.
@@ -511,6 +516,51 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
     *   `configs/inference/exp24V1_inference_yolo11s_res960_hsvh020_mosaic00_hsvv000.yaml`
     *   `configs/inference/exp24V2_inference_yolo11s_res960_hsvh020_mosaic00_hsvv020.yaml`
     *   `configs/inference/exp24V3_inference_yolo11s_res960_hsvh020_mosaic00_hsvv050.yaml`
+
+### [Exp 25-L Sweep] Loss Gain(box/cls/dfl) 전이 검증 (YOLO11s, 960px)
+*   **실험 목적**: 팀 내 640 해상도 선행 탐색에서 얻은 loss gain 후보를 `Exp22-H3M0(960)` 기준으로 이식해, 실전 성능 이득이 재현되는지 검증.
+*   **가설 설정 이유**:
+    *   640에서의 선행 탐색은 저비용 후보 발굴(cheap screening) 단계로 유효하며, 960은 최종 채택 검증 단계로 분리 운영하는 것이 실무적으로 합리적이다.
+    *   단, 640에서 유효했던 수치를 960의 확정값으로 그대로 쓰는 것은 금지하고, 960에서 재검증/재탐색을 거쳐야 한다.
+*   **실행 조건**: `optimizer=AdamW`, `seed=42`, `imgsz=960`, `batch=16`, `hsv_h=0.020`, `mosaic=0.0`, `fliplr=0.0` 고정. 변경 변수는 `box/cls/dfl`만 적용(`cls=0.5` 고정).
+*   **결과 요약 (Local + Kaggle)**:
+
+    | 제출순위(로컬) | 실험명 | box, cls, dfl | Precision | Recall | mAP50 | mAP50-95 | vs Exp22-H3M0 (Local) | Kaggle |
+    | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+    | **1** | **Exp25-LBD1** | **(8.5, 0.5, 2.0)** | 0.9741 | **0.9856** | 0.9941 | **0.9923** | **+0.0008** | 제출 완료 (Exp22 대비 하락, 수치 입력 대기) |
+    | 2 | Exp25-LD1 | (7.5, 0.5, 2.0) | **0.9787** | 0.9599 | **0.9944** | 0.9920 | +0.0005 | TBD |
+    | 3 | Exp25-LB1 | (8.5, 0.5, 1.5) | 0.9730 | 0.9632 | 0.9932 | 0.9919 | +0.0004 | TBD |
+    | - | Exp22-H3M0 (기준) | (7.5, 0.5, 1.5) | 0.9753 | 0.9630 | 0.9935 | 0.9915 | - | **0.97199** |
+    | - | Exp15-Baseline | (7.5, 0.5, 1.5) | 0.9704 | 0.9761 | 0.9918 | 0.9897 | -0.0018 | **0.96455** |
+
+*   **해석**:
+    *   Local 기준으로는 `LB1/LD1/LBD1` 모두 `Exp22-H3M0` 대비 소폭 개선되었지만, 개선폭이 `+0.001` 게이트를 넘지 못해 강한 신호로 보기는 어렵다.
+    *   `LBD1`은 Local 1위이지만, Kaggle에서는 기준 `Exp22-H3M0` 대비 하락이 관찰되어 최종 채택 근거가 약하다.
+    *   따라서 이번 결과는 "640 탐색이 무의미했다"가 아니라, **640 후보가 960에서 그대로 전이되지 않았음을 정상적으로 검출한 사례**로 해석하는 것이 타당하다.
+*   **결론**:
+    *   640 선행 탐색 자체는 유효한 전략이며(후보 발굴), 최종 채택은 960 재검증으로 확정해야 한다.
+    *   현재 기준 제출 모델은 `Exp22-H3M0`를 유지하고, `Exp25` 라인은 보조 후보로 보관한다.
+    *   마감 시점 운영 우선순위는 960 추가 하이퍼튜닝보다 `Phase4(WBF/TTA/SAHI)` 추론 최적화로 전환한다.
+*   **근거 파일**:
+    *   `metrics/exp25LB1_train_yolo11s_res960_hsvh020_mosaic00_box850_cls050_dfl150_val_metrics.json`
+    *   `metrics/exp25LD1_train_yolo11s_res960_hsvh020_mosaic00_box750_cls050_dfl200_val_metrics.json`
+    *   `metrics/exp25LBD1_train_yolo11s_res960_hsvh020_mosaic00_box850_cls050_dfl200_val_metrics.json`
+    *   `configs/train/exp25LB1_train_yolo11s_res960_hsvh020_mosaic00_box850_cls050_dfl150.yaml`
+    *   `configs/train/exp25LD1_train_yolo11s_res960_hsvh020_mosaic00_box750_cls050_dfl200.yaml`
+    *   `configs/train/exp25LBD1_train_yolo11s_res960_hsvh020_mosaic00_box850_cls050_dfl200.yaml`
+    *   `configs/inference/exp25LB1_inference_yolo11s_res960_hsvh020_mosaic00_box850_cls050_dfl150.yaml`
+    *   `configs/inference/exp25LD1_inference_yolo11s_res960_hsvh020_mosaic00_box750_cls050_dfl200.yaml`
+    *   `configs/inference/exp25LBD1_inference_yolo11s_res960_hsvh020_mosaic00_box850_cls050_dfl200.yaml`
+    *   `submission/exp25LBD1_yolo11s_res960_hsvh020_mosaic00_box850_cls050_dfl200.csv`
+
+### [Exp 26] Exp22 기반 Multi-scale WBF (Phase4 1차)
+*   **실험 목적**: `Exp22-H3M0` 단일 모델에서 재학습 없이 추론 성능을 개선할 수 있는지 검증.
+*   **설정**: 동일 가중치(`Exp22 best.pt`)로 `640/960/1024` 예측 CSV 생성 후 WBF 병합. 비교군 통제를 위해 `NMS IoU=0.70`, `WBF IoU=0.70` 고정.
+*   **Kaggle 결과**:
+    *   `Exp22-H3M0`: **0.97199**
+    *   `Exp26-WBF`: **0.97345**
+    *   **개선폭: +0.00146**
+*   **해석**: 상단 점수 구간에서 재학습 없이 얻은 유의미한 개선으로 판단. 다음 단계는 `Exp27(다중 seed WBF)`에서 추가 개선 가능성 확인.
 
 
 

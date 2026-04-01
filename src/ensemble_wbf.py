@@ -62,7 +62,7 @@ def parse_args():
         type=float,
         help='Optional per-CSV weights; defaults to equal weighting',
     )
-    parser.add_argument('--iou', type=float, default=0.6, help='IoU threshold for WBF')
+    parser.add_argument('--iou', type=float, default=0.7, help='IoU threshold for WBF')
     parser.add_argument(
         '--output',
         type=str,
