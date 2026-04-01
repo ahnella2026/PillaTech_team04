@@ -76,6 +76,9 @@ git restore --source=pred/yewon train_annotations
 | **Exp 23-C1** | **CLAHE-15** | `Exp22-H3M0` 고정 + CLAHE 데이터셋(`seed_42_cl15`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9683 | 0.9643 | 0.9663 | 0.9948 | 0.9950 | **0.9941** | 50 | 13.48 | - | train/inference 완료 / Kaggle: **0.96435** |
 | **Exp 23-C2** | **CLAHE-20** | `Exp22-H3M0` 고정 + CLAHE 데이터셋(`seed_42_cl20`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9548 | 0.9801 | **0.9673** | 0.9931 | 0.9950 | 0.9914 | 50 | 13.25 | - | train 완료 / inference 대기 / Kaggle: **TBD** |
 | **Exp 23-C3** | **CLAHE-25** | `Exp22-H3M0` 고정 + CLAHE 데이터셋(`seed_42_cl25`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9347 | **0.9926** | 0.9627 | 0.9946 | 0.9950 | 0.9928 | 50 | 13.23 | - | train 완료 / inference 대기 / Kaggle: **TBD** |
+| **Exp 24-V1** | **HSVV-0.0** | `Exp22-H3M0` 고정 + `hsv_v 0.4→0.0` | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9749 | 0.9641 | 0.9695 | 0.9935 | 0.9950 | 0.9906 | 50 | 13.52 | - | train 완료 / inference 대기 / Kaggle: **TBD** |
+| **Exp 24-V2** | **HSVV-0.2** | `Exp22-H3M0` 고정 + `hsv_v 0.4→0.2` | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9559 | 0.9854 | 0.9704 | 0.9943 | 0.9950 | **0.9928** | 50 | 13.33 | - | train/inference 완료 / Kaggle: **0.96308** |
+| **Exp 24-V3** | **HSVV-0.5** | `Exp22-H3M0` 고정 + `hsv_v 0.4→0.5` | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9600 | 0.9818 | **0.9708** | 0.9945 | 0.9950 | 0.9922 | 50 | 13.42 | - | train 완료 / inference 대기 / Kaggle: **TBD** |
 
 > `*` Exp18의 P/R/F1/mAP는 `results.csv`의 50epoch 행 값 기준(학습 중 val 로그)이며, `train_yolo.py`의 final `model.val()` 결과값은 OOM 종료로 미기록.
 
@@ -466,6 +469,48 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
     *   `configs/inference/exp23C1_inference_yolo11s_res960_hsvh020_mosaic00_clahe15.yaml`
     *   `configs/inference/exp23C2_inference_yolo11s_res960_hsvh020_mosaic00_clahe20.yaml`
     *   `configs/inference/exp23C3_inference_yolo11s_res960_hsvh020_mosaic00_clahe25.yaml`
+
+### [Exp 24-V Sweep] HSV_V 강도 재탐색 (YOLO11s, 960px)
+*   **실험 목적**: `Exp22-H3M0` 기준 설정에서 `hsv_v`만 단일 변수로 조정(`0.0/0.2/0.5`)해, CLAHE 라인 기각 이후 밝기 변형 강도의 실효성을 재검증.
+*   **실행 조건**: `optimizer=AdamW`, `seed=42`, `imgsz=960`, `batch=16`, `hsv_h=0.020`, `mosaic=0.0`, `fliplr=0.0` 고정. 변경 변수는 `hsv_v`만 적용.
+*   **결과 요약 (Local + Kaggle)**:
+
+    | 실험 | hsv_v | Precision | Recall | F1 | mAP50 | mAP50-95 | vs Exp22-H3M0 (Local) | Kaggle |
+    | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+    | **Exp24-V2** | **0.2** | 0.9559 | 0.9854 | 0.9704 | 0.9943 | **0.9928** | **+0.0013** | **0.96308** |
+    | Exp24-V3 | 0.5 | 0.9600 | 0.9818 | **0.9708** | 0.9945 | 0.9922 | +0.0007 | TBD |
+    | Exp24-V1 | 0.0 | **0.9749** | 0.9641 | 0.9695 | 0.9935 | 0.9906 | -0.0009 | TBD |
+    | Exp22-H3M0 (기준) | 0.4 | 0.9753 | 0.9630 | 0.9691 | 0.9935 | 0.9915 | - | **0.97199** |
+
+*   **해석**:
+    *   `hsv_v` 하향(0.2)과 상향(0.5) 모두 Local 기준으로는 `Exp22-H3M0` 대비 개선 신호가 확인됨.
+    *   `hsv_v=0.0`(완전 OFF)은 Precision은 높지만 mAP50-95가 기준보다 낮아, 과도한 축소(밝기 변형 제거)는 불리할 가능성이 큼.
+    *   현재 우열은 `V2(0.2) > V3(0.5) > Base(0.4) > V1(0.0)` 순.
+    *   **중요 업데이트(실전 일반화 실패)**: `Exp24-V2`는 Kaggle **0.96308**로, 기준 `Exp22-H3M0(0.97199)` 대비 **-0.00891** 하락했다.
+    *   즉, `hsv_v=0.2`의 Local 개선은 실전 일반화로 이어지지 않았고, 현재 기준으로는 `V2`를 채택할 수 없다.
+*   **제출 우선순위 (업데이트, 실전 기준)**:
+
+    | 제출순위(실전) | 실험명 | hsv_v | Precision | Recall | mAP50 | mAP50-95 | Kaggle |
+    | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+    | **1** | **Exp24-V3** | **0.5** | 0.9600 | 0.9818 | 0.9945 | 0.9922 | 미제출 |
+    | 2 | Exp24-V1 | 0.0 | **0.9749** | 0.9641 | 0.9935 | 0.9906 | 미제출 |
+    | 3 | Exp24-V2 | 0.2 | 0.9559 | 0.9854 | 0.9943 | **0.9928** | **0.96308 (기각)** |
+    | - | Exp22-H3M0 (기준) | 0.4 | 0.9753 | 0.9630 | 0.9935 | 0.9915 | **0.97199** |
+
+*   **결론(업데이트)**:
+    *   `V2`는 실전 하락이 명확하므로 즉시 기각한다.
+    *   남은 검증 가치는 `V3` 1회 확인 제출에 한정한다(`V1`은 슬롯 여유 있을 때만).
+    *   `V3`도 기준(`0.97199`)을 넘지 못하면 `hsv_v` 라인은 보류/종료하고 기준 모델 `Exp22-H3M0` 유지가 합리적이다.
+*   **근거 파일**:
+    *   `metrics/exp24V1_train_yolo11s_res960_hsvh020_mosaic00_hsvv000_val_metrics.json`
+    *   `metrics/exp24V2_train_yolo11s_res960_hsvh020_mosaic00_hsvv020_val_metrics.json`
+    *   `metrics/exp24V3_train_yolo11s_res960_hsvh020_mosaic00_hsvv050_val_metrics.json`
+    *   `configs/train/exp24V1_train_yolo11s_res960_hsvh020_mosaic00_hsvv000.yaml`
+    *   `configs/train/exp24V2_train_yolo11s_res960_hsvh020_mosaic00_hsvv020.yaml`
+    *   `configs/train/exp24V3_train_yolo11s_res960_hsvh020_mosaic00_hsvv050.yaml`
+    *   `configs/inference/exp24V1_inference_yolo11s_res960_hsvh020_mosaic00_hsvv000.yaml`
+    *   `configs/inference/exp24V2_inference_yolo11s_res960_hsvh020_mosaic00_hsvv020.yaml`
+    *   `configs/inference/exp24V3_inference_yolo11s_res960_hsvh020_mosaic00_hsvv050.yaml`
 
 
 

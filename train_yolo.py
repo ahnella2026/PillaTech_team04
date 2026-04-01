@@ -223,6 +223,24 @@ def build_parser(defaults: dict) -> argparse.ArgumentParser:
         default=bool(defaults.get("resume", False)),
         help="resume previous training run",
     )
+    parser.add_argument(
+        "--box",
+        type=float,
+        default=float(defaults.get("box", 7.5)),
+        help="box loss gain weight",
+    )
+    parser.add_argument(
+        "--cls",
+        type=float,
+        default=float(defaults.get("cls", 0.5)),
+        help="classification loss gain weight",
+    )
+    parser.add_argument(
+        "--dfl",
+        type=float,
+        default=float(defaults.get("dfl", 1.5)),
+        help="distribution focal loss gain weight",
+    )
     parser.add_argument("--hsv_h", type=float, default=float(defaults.get("hsv_h", 0.015)), help="hsv_h augmentation")
     parser.add_argument("--hsv_s", type=float, default=float(defaults.get("hsv_s", 0.7)), help="hsv_s augmentation")
     parser.add_argument("--hsv_v", type=float, default=float(defaults.get("hsv_v", 0.4)), help="hsv_v augmentation")
@@ -341,6 +359,9 @@ def parse_args() -> argparse.Namespace:
             "cos_lr",
             "pretrained",
             "resume",
+            "box",
+            "cls",
+            "dfl",
             "hsv_h",
             "hsv_s",
             "hsv_v",
@@ -542,6 +563,9 @@ def main() -> None:
         verbose=True,
         optimizer=args.optimizer,
         close_mosaic=args.close_mosaic,
+        box=args.box,
+        cls=args.cls,
+        dfl=args.dfl,
 
 
         # # === 실험 1: Baseline 증강 유지 ===
@@ -667,6 +691,9 @@ def main() -> None:
         "optimizer_resolved": resolved_optimizer,
         "optimizer_lr": float(resolved_lr) if resolved_lr is not None else None,
         "optimizer_weight_decay": float(resolved_weight_decay) if resolved_weight_decay is not None else None,
+        "loss_weight_box": float(args.box),
+        "loss_weight_cls": float(args.cls),
+        "loss_weight_dfl": float(args.dfl),
         "os_platform": runtime_env.get("os_platform"),
         "python_version": runtime_env.get("python_version"),
         "torch_version": runtime_env.get("torch_version"),
