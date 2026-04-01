@@ -73,6 +73,9 @@ git restore --source=pred/yewon train_annotations
 | **Exp 21-M1** | **Mosaic-0.4** | `mosaic` 국소 탐색(`0.5→0.4`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9727 | 0.9622 | 0.9674 | 0.9918 | 0.9950 | 0.9897 | 50 | 14.11 | 0.071 | train 완료 / inference 대기 / Kaggle: **TBD** |
 | **Exp 21-M2** | **Mosaic-0.6** | `mosaic` 국소 탐색(`0.5→0.6`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9747 | 0.9648 | 0.9697 | 0.9939 | 0.9950 | 0.9920 | 50 | 13.69 | 0.073 | train/inference 완료 / Kaggle: **0.96154** |
 | **Exp 22-H3M0** | **H3+M0 Combo** | `hsv_h=0.020(H3)` + `mosaic=0.0(M0)` 조합 검증 | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9753 | 0.9630 | 0.9691 | 0.9935 | 0.9950 | 0.9915 | 50 | 13.48 | 0.072 | train/inference 완료 / Kaggle: **0.97199** |
+| **Exp 23-C1** | **CLAHE-15** | `Exp22-H3M0` 고정 + CLAHE 데이터셋(`seed_42_cl15`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9683 | 0.9643 | 0.9663 | 0.9948 | 0.9950 | **0.9941** | 50 | 13.48 | - | train/inference 완료 / Kaggle: **0.96435** |
+| **Exp 23-C2** | **CLAHE-20** | `Exp22-H3M0` 고정 + CLAHE 데이터셋(`seed_42_cl20`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9548 | 0.9801 | **0.9673** | 0.9931 | 0.9950 | 0.9914 | 50 | 13.25 | - | train 완료 / inference 대기 / Kaggle: **TBD** |
+| **Exp 23-C3** | **CLAHE-25** | `Exp22-H3M0` 고정 + CLAHE 데이터셋(`seed_42_cl25`) | v11s | 960 | 50 | 42 | AdamW | .25 | .70 | 0.9347 | **0.9926** | 0.9627 | 0.9946 | 0.9950 | 0.9928 | 50 | 13.23 | - | train 완료 / inference 대기 / Kaggle: **TBD** |
 
 > `*` Exp18의 P/R/F1/mAP는 `results.csv`의 50epoch 행 값 기준(학습 중 val 로그)이며, `train_yolo.py`의 final `model.val()` 결과값은 OOM 종료로 미기록.
 
@@ -88,10 +91,10 @@ git restore --source=pred/yewon train_annotations
 
 ### 평가 기준 정리
 *   **용어 고정**:
-    *   **Local mAP** = 로컬 `validation` 셋(`data/yolo_dataset/images/val`)에서 계산한 mAP 지표
+    *   **Local mAP** = 각 실험에서 지정한 `dataset.yaml`의 `val` split에서 계산한 mAP 지표
     *   **Kaggle score** = `test_images` 제출 CSV 기준 Kaggle 리더보드 점수
 *   **기록 규칙**: 모든 실험은 `Local mAP`와 `Kaggle score`를 분리해서 기록하고, 두 수치를 직접 동일 지표로 비교하지 않음.
-*   Exp 1~9의 mAP 지표는 모두 로컬 `validation` 셋(`data/yolo_dataset/images/val`) 기준으로 산출함.
+*   Exp 1~9의 mAP 지표는 로컬 `validation` 셋(`data/yolo_dataset/images/val`) 기준으로 산출했고, 이후 파생 실험은 각 실험 YAML의 `data` 경로 기준으로 산출함.
 *   캐글 제출용 CSV는 별도 추론 스크립트 `src/test_custom.py`를 사용해 `test_images` 기준으로 생성함.
 *   따라서 로컬 mAP와 캐글 점수는 서로 다른 데이터셋에서 측정된 값이며, 직접적으로 동일 지표가 아님.
 *   Exp 8은 `validation` 기준으로 Exp5의 `best.pt`를 사용해 NMS 탐색을 수행한 뒤, 동일 가중치로 `test_images` 제출 CSV를 생성한 실험임.
@@ -431,6 +434,38 @@ Exp 8에서 단일 모델 기준으로는 다소 불리했던 `iou=0.60` 설정�
 *   **통찰**:
     *   Local 기준으로는 `H3` 단독(`0.9919`) 대비 소폭 하락(`0.9915`)했지만, Kaggle은 `H3(0.97154)` 대비 **+0.00045** 상승했다.
     *   개선 폭은 크지 않지만 방향은 양수이므로, 현재 제출/추론 고도화 기준 모델은 `H3M0`를 우선 채택하고 `H3`를 폴백으로 유지한다.
+
+### [Exp 23-C Sweep] CLAHE 강도 탐색 (YOLO11s, 960px)
+*   **실험 목적**: `Exp22-H3M0` 설정을 고정한 상태에서 CLAHE 강도(`cl15/cl20/cl25`)만 바꿔, 로컬 validation 기준 실효성이 있는지 확인.
+*   **실행 조건**: `optimizer=AdamW`, `seed=42`, `imgsz=960`, `batch=16`, `hsv_h=0.020`, `mosaic=0.0`, `fliplr=0.0` 고정. 변경 변수는 데이터셋(`data/yolo_cleaned_clahe/seed_42_clXX/dataset.yaml`)만 적용.
+*   **결과 요약 (Local + Kaggle)**:
+
+    | 실험 | Precision | Recall | F1 | mAP50 | mAP75 | mAP50-95 | vs Exp22-H3M0 (Local) | Kaggle |
+    | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+    | **Exp23-C1 (cl15)** | 0.9683 | 0.9643 | 0.9663 | 0.9948 | 0.9950 | **0.9941** | **+0.0026** | **0.96435** |
+    | Exp23-C2 (cl20) | 0.9548 | 0.9801 | **0.9673** | 0.9931 | 0.9950 | 0.9914 | -0.0001 | TBD |
+    | Exp23-C3 (cl25) | 0.9347 | **0.9926** | 0.9627 | 0.9946 | 0.9950 | 0.9928 | +0.0013 | TBD |
+
+*   **해석**:
+    *   로컬 기준으로는 CLAHE가 **조건부로 유효**했다. `cl15`가 최고 성능(`0.9941`)이며 기준 실험 `Exp22-H3M0(0.9915)` 대비 **+0.0026** 개선.
+    *   `cl20`은 실질적 개선이 없고(`-0.0001`), `cl25`는 개선은 있으나 `cl15`를 넘지 못함.
+    *   강도를 올릴수록(`cl20→cl25`) Recall은 올라가지만 Precision이 크게 하락하는 패턴이 보여, 과도한 대비 강화가 오탐을 늘릴 가능성이 있음.
+    *   **중요 업데이트(실전 일반화 실패)**: `Exp23-C1`의 Kaggle 점수는 **0.96435**로, 기준 `Exp22-H3M0(0.97199)` 대비 **-0.00764** 하락했다.
+    *   즉, `CLAHE val`에서 얻은 Local 이득이 `raw test` 일반화로 이어지지 않았고, 분포 불일치(domain mismatch) 리스크가 실제 점수 하락으로 확인됐다.
+*   **추론/캐글 상태**:
+    *   `C1`: inference/제출 완료, Kaggle **0.96435** (하락)
+    *   `C2`, `C3`: train/val 완료, Kaggle 미제출(`TBD`)
+*   **결론**: 현 세팅(`960 + H3M0`)에서 CLAHE는 실전 기준 독성 가능성이 높다. `Exp23` 라인은 우선 **보류/기각**하고, 제출 기준은 `Exp22-H3M0`를 유지한다.
+*   **근거 파일**:
+    *   `metrics/exp23C1_train_yolo11s_res960_hsvh020_mosaic00_clahe15_val_metrics.json`
+    *   `metrics/exp23C2_train_yolo11s_res960_hsvh020_mosaic00_clahe20_val_metrics.json`
+    *   `metrics/exp23C3_train_yolo11s_res960_hsvh020_mosaic00_clahe25_val_metrics.json`
+    *   `configs/train/exp23C1_train_yolo11s_res960_hsvh020_mosaic00_clahe.yaml`
+    *   `configs/train/exp23C2_train_yolo11s_res960_hsvh020_mosaic00_clahe.yaml`
+    *   `configs/train/exp23C3_train_yolo11s_res960_hsvh020_mosaic00_clahe.yaml`
+    *   `configs/inference/exp23C1_inference_yolo11s_res960_hsvh020_mosaic00_clahe15.yaml`
+    *   `configs/inference/exp23C2_inference_yolo11s_res960_hsvh020_mosaic00_clahe20.yaml`
+    *   `configs/inference/exp23C3_inference_yolo11s_res960_hsvh020_mosaic00_clahe25.yaml`
 
 
 
