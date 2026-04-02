@@ -249,6 +249,10 @@ Exp 15 베이스라인과 동일한 성능을 재현하려면 아래 파라미�
 - 각자 로컬에서 같은 설정으로 다시 추론하면 OS/torch 차이로 CSV가 달라질 수 있습니다. 
 - 제출 직전 가중치 경로/파일명이 섞이면 다른 모델이 제출될 수 있습니다.
 
-
+# 협업일지
+안수진: https://www.notion.so/32ce900739a38028a0a0d57bb152b0c8?v=32ce900739a38046ad15000cf20bf2e0&source=copy_link
+김한별: https://www.notion.so/32529b0c6ec08023a458c3f55863ff83?v=32529b0c6ec08079a56c000cfbb5d491
+황예원: https://www.notion.so/Daily-31916104cddd806e9dfbf391a157ff54?source=copy_link
+원숙현: https://www.notion.so/_AI-9-6e612f601f43823e8a4b014c52cd3013?source=copy_link
 ---
 © PillaTech Team 04
